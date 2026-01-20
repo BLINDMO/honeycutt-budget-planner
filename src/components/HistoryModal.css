@@ -1,0 +1,99 @@
+/* HistoryModal.css */
+
+.history-modal-content {
+    width: 600px;
+    max-width: 95vw;
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+}
+
+.history-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.history-header h3 {
+    margin-bottom: 0.5rem;
+    color: white;
+}
+
+.history-subtitle {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.history-list-header {
+    display: grid;
+    grid-template-columns: 100px 1fr 100px 100px;
+    padding: 0 1rem 0.75rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 0;
+}
+
+.history-item {
+    display: grid;
+    grid-template-columns: 100px 1fr 100px 100px;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.9rem;
+    align-items: center;
+}
+
+.history-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.col-date {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.col-name {
+    color: white;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 1rem;
+}
+
+.col-method {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+}
+
+.col-amount {
+    color: #d4af37;
+    font-weight: 600;
+    text-align: right;
+}
+
+.empty-history {
+    text-align: center;
+    padding: 3rem 0;
+    color: rgba(255, 255, 255, 0.3);
+    font-style: italic;
+}
+
+/* Scrollbar integration */
+.history-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.history-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.history-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}

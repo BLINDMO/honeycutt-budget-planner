@@ -1,0 +1,1130 @@
+/* CRITICAL FIXES FOR DASHBOARD UI - 6 COLUMN LAYOUT */
+
+/* Fix the bill list header - MUST be 6 columns */
+.bill-list-header {
+    display: grid !important;
+    /* Note | Day | Name | Amount | Balance | Paid */
+    /* Tuned widths: Note(50) Day(80) Name(1fr) Amount(140) Balance(160) Paid(70) */
+    grid-template-columns: 50px 80px 1fr 140px 160px 70px !important;
+    gap: 1rem;
+    padding: 0 1rem;
+    margin-bottom: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 12px;
+}
+
+/* Individual header cells */
+.header-note {
+    width: 50px;
+    text-align: center;
+}
+
+.header-date {
+    width: 80px;
+    text-align: left;
+    padding-left: 0.5rem;
+}
+
+.header-name {
+    flex: 1;
+    text-align: left;
+    padding-left: 0.5rem;
+}
+
+.header-amount {
+    width: 140px;
+    text-align: right;
+}
+
+.header-balance {
+    width: 160px;
+    text-align: right;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.header-paid {
+    width: 70px;
+    text-align: center;
+}
+
+/* BILL ITEM GRID */
+.bill-item {
+    display: grid !important;
+    grid-template-columns: 50px 80px 1fr 140px 160px 70px !important;
+    gap: 1rem;
+    padding: 1rem;
+    margin-bottom: 0.6rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    align-items: center;
+    transition: all 0.2s ease-in-out;
+    border: 1px solid transparent;
+}
+
+.bill-item:hover {
+    background: rgba(255, 255, 255, 0.07);
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Column 1: Note button */
+.bill-note-col {
+    width: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-note-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.add-note-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Column 2: Date */
+.bill-date {
+    width: 80px;
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-weight: 500;
+    text-align: left;
+    padding-left: 0.5rem !important;
+    font-size: 0.95rem;
+    font-family: 'Geist Mono', 'Roboto Mono', monospace;
+    /* If available, or standard mono */
+    opacity: 0.9;
+}
+
+/* Column 3: Bill name */
+.bill-name {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: white;
+    font-size: 1.05rem;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left: 0.5rem;
+}
+
+.inline-note-input {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.inline-note-input input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    padding: 6px 10px;
+    color: white;
+    font-size: 0.9rem;
+}
+
+.save-note-mini-btn {
+    width: 24px;
+    height: 24px;
+    background: rgba(76, 175, 80, 0.3);
+    border: none;
+    border-radius: 4px;
+    color: #4CAF50;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* Column 4: Amount */
+.bill-amount {
+    width: 140px;
+    text-align: right;
+    color: #FFD700;
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: 0.02em;
+}
+
+/* Column 5: Balance (NEW) */
+.bill-balance-col {
+    width: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.balance-amount {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.5);
+    /* text-decoration: line-through; (Removed as requested) */
+}
+
+.payoff-info-btn {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(33, 150, 243, 0.2);
+    border: none;
+    color: #2196F3;
+    cursor: pointer;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.payoff-info-btn:hover {
+    background: rgba(33, 150, 243, 0.4);
+}
+
+/* Column 6: Paid */
+.bill-actions {
+    width: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mark-paid-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s;
+}
+
+.mark-paid-btn:hover {
+    background: rgba(76, 175, 80, 0.2);
+    border-color: #4CAF50;
+}
+
+.mark-paid-btn:not(:empty) {
+    color: #4CAF50;
+    background: rgba(76, 175, 80, 0.2);
+    border-color: #4CAF50;
+}
+
+/* General Layout - Keep what's needed from original */
+.dashboard {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #000000;
+    overflow: hidden;
+}
+
+.dashboard-content {
+    flex: 1;
+    display: grid;
+    /* 2 Columns: Main Bills Area (Rest of space) | Right Panel (Fixed width 300px as requested) */
+    grid-template-columns: 1fr 300px;
+    gap: 1.5rem;
+    padding: 1.5rem 2rem;
+    /* Added slightly more side padding for breathability */
+    overflow: hidden;
+}
+
+.pane {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: rgba(10, 10, 10, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.pane-header {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* Push title and controls apart */
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* Notes Pane */
+.notes-empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.3;
+    gap: 1rem;
+}
+
+.notes-empty-icon {
+    font-size: 3rem;
+}
+
+.notes-empty-text {
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* Right Pane */
+.right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: 100%;
+}
+
+.paid-pane {
+    flex: 3;
+}
+
+.stats-pane {
+    flex: 1;
+    background: linear-gradient(135deg, rgba(25, 25, 25, 0.9), rgba(10, 10, 10, 0.95));
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+}
+
+.mini-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+}
+
+.stat-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #d4af37;
+}
+
+/* Paid Item */
+.paid-item-clean {
+    min-height: 48px;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.paid-main-text {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.paid-amt-highlight {
+    color: #22c55e;
+    font-weight: 600;
+}
+
+.paid-sub-text {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.unpay-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* Modals */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    /* Dimmed to 50% opacity as requested */
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    max-width: 500px;
+    width: 90%;
+    padding: 2rem;
+    background: #0a0a0a;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 1rem;
+}
+
+.modal-content h3 {
+    color: #d4af37;
+    margin-bottom: 1.5rem;
+}
+
+.modal-content textarea {
+    width: 100%;
+    background: #1a1a1a;
+    color: #fff;
+    padding: 1rem;
+    border: 1px solid #333;
+}
+
+
+/* Updated Payment Modal Styles */
+.payment-modal-content {
+    background: #000 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    width: 550px !important;
+    max-width: 95vw !important;
+    padding: 0 !important;
+    overflow: hidden;
+    border-radius: 16px !important;
+}
+
+.payment-modal-header {
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    padding: 2rem 2rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: center;
+}
+
+.highlight-text {
+    color: #fff;
+    font-weight: 700;
+}
+
+.payment-amount-large {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #FFD700;
+    margin-top: 0.5rem;
+    text-shadow: 0 2px 10px rgba(255, 215, 0, 0.2);
+}
+
+.payment-methods-section {
+    padding: 1.5rem 2rem;
+}
+
+.section-label {
+    display: block;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+.payment-methods-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.method-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1rem;
+    color: white;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.method-card:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.method-card.selected {
+    background: rgba(76, 175, 80, 0.15);
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 1px #4CAF50;
+}
+
+.method-icon {
+    font-size: 1.2rem;
+}
+
+.method-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.check-icon {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: #4CAF50;
+    font-size: 0.8rem;
+}
+
+.add-new-method-card {
+    background: transparent;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+}
+
+.add-new-method-card:hover {
+    opacity: 1;
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.plus-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.add-method-form {
+    padding: 0 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.add-method-form input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    color: white;
+    font-size: 0.95rem;
+}
+
+.add-method-form input:focus {
+    border-color: #2196F3;
+    outline: none;
+}
+
+.add-method-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.btn-primary-small {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.btn-secondary-small {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-secondary-small:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ============================================================================
+   BUTTONS & ACTIONS
+   ============================================================================ */
+
+.header-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.new-month-btn {
+    background: transparent;
+    border: 1px solid #d4af37;
+    color: #d4af37;
+    padding: 0.35rem 1rem;
+    border-radius: 6px;
+    /* Pill shape or rounded rect based on pref */
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+}
+
+.new-month-btn:hover {
+    background: rgba(212, 175, 55, 0.1);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+}
+
+.header-action-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 0.35rem 0.85rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.header-action-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #fff;
+}
+
+.header-action-btn.active {
+    background: rgba(255, 255, 255, 0.1);
+    /* Subtle white active state for Edit */
+    border-color: #fff;
+    color: #fff;
+}
+
+.delete-bill-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255, 50, 50, 0.15);
+    border: 1px solid rgba(255, 50, 50, 0.3);
+    color: #ff4d4d;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    line-height: 1;
+    padding-bottom: 2px;
+    /* Visual center adjustment */
+    transition: all 0.2s;
+}
+
+.delete-bill-btn:hover {
+    background: rgba(255, 50, 50, 0.3);
+    transform: scale(1.1);
+    box-shadow: 0 0 8px rgba(255, 50, 50, 0.4);
+}
+
+.add-new-bill-row-btn {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.85rem;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px dashed rgba(212, 175, 55, 0.3);
+    border-radius: 8px;
+    color: #d4af37;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+}
+
+.add-new-bill-row-btn:hover {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: #d4af37;
+    transform: translateY(-1px);
+}
+
+/* ============================================================================
+   PAYOFF MODAL IMPROVEMENTS
+   ============================================================================ */
+.payoff-modal {
+    width: 900px !important;
+    /* MUCH WIDER */
+    max-width: 95vw !important;
+    padding: 0 !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.payoff-header {
+    background: linear-gradient(to right, rgba(10, 10, 10, 0.95), rgba(30, 30, 30, 0.95));
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.payoff-header h3 {
+    margin: 0;
+    font-size: 1.4rem;
+}
+
+.payoff-grid {
+    padding: 2rem;
+    display: grid;
+    gap: 2rem;
+    /* Grid layout: Top section for stats, Bottom for strategies */
+}
+
+.payoff-section.main-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-row {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 1rem;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-row.highlight-row {
+    background: rgba(212, 175, 55, 0.08);
+    /* Gold tint */
+    border-color: rgba(212, 175, 55, 0.2);
+}
+
+.stat-row .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 0.05em;
+}
+
+.stat-row .value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.value.text-warning {
+    color: #ff9800;
+}
+
+.value.text-good {
+    color: #4caf50;
+}
+
+.value.text-excellent {
+    color: #00e676;
+    text-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
+}
+
+/* Strategies Container */
+.payoff-scenarios-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    /* Two columns for 2 strategies */
+    gap: 1.5rem;
+}
+
+.payoff-scenarios-container h4 {
+    grid-column: 1 / -1;
+    margin: 0 0 0.5rem 0;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+.strategy-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: all 0.2s;
+}
+
+.strategy-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.strategy-card.aggressive {
+    background: rgba(76, 175, 80, 0.05);
+    border-color: rgba(76, 175, 80, 0.2);
+}
+
+.strategy-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.strategy-name {
+    font-weight: 700;
+    color: #fff;
+    font-size: 1.1rem;
+}
+
+.strategy-amount {
+    background: #d4af37;
+    color: #000;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.strategy-results .result-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.res-label {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.9rem;
+}
+
+
+/* Update Modal Actions for Padding */
+/* Update Modal Actions for Padding */
+.modal-actions {
+    padding: 1.5rem 2rem;
+    /* Add padding to prevent edge hug */
+    display: flex;
+    justify-content: flex-end;
+    /* Right align generally preferred */
+    gap: 1rem;
+    /* Add gap between buttons */
+    background: rgba(0, 0, 0, 0.2);
+    /* Slight background for footer */
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.result-item .res-value {
+    font-weight: 600;
+    font-size: 1rem;
+    text-align: right;
+    max-width: 140px;
+    /* Prevent massive numbers breaking layout */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* Button styles removed - using global .btn-primary and .btn-secondary from design-system.css */
+
+
+/* Fix Balance Header Alignment */
+.header-balance {
+    padding-right: 0.5rem;
+    /* Ensure it aligns better with the content */
+}
+
+/* Reset Feature Styles */
+.relative-stats-pane {
+    position: relative;
+    padding-bottom: 2.5rem;
+    /* Make room for the button */
+}
+
+.reset-app-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 0.8rem;
+    cursor: pointer;
+    position: absolute;
+    bottom: 1rem;
+    right: 1.5rem;
+    transition: all 0.2s;
+    text-transform: lowercase;
+}
+
+.reset-app-btn:hover {
+    color: rgba(255, 50, 50, 0.6);
+}
+
+.reset-modal-content {
+    border: 1px solid rgba(255, 50, 50, 0.3) !important;
+}
+
+.reset-warning {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.reset-input-group {
+    margin-bottom: 2rem;
+}
+
+.reset-input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+}
+
+.reset-input-group input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.75rem;
+    color: white;
+    font-size: 1rem;
+    border-radius: 6px;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ff4d4d, #d32f2f);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-danger:hover:not(:disabled) {
+    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
+}
+
+.btn-danger:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: #444;
+}
+
+/* Stats Label Improvement for Longer Text */
+.mini-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.stat-label {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: normal;
+    /* Allow wrapping */
+    line-height: 1.2;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.strategy-narrative {
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.highlight-val {
+    color: #4caf50;
+    font-weight: 700;
+}
+
+.aggressive .highlight-val {
+    color: #00e676;
+}
+
+
+
+/* Red Undo Button */
+.unpay-btn {
+    background: rgba(220, 38, 38, 0.15);
+    border: 1px solid rgba(220, 38, 38, 0.4);
+    color: #f87171;
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    height: auto;
+}
+
+.unpay-btn:hover {
+    background: rgba(220, 38, 38, 0.3);
+    border-color: #ef4444;
+    color: #fff;
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.2);
+}
+
+/* Payoff Date Card - refinements to work with stat-row */
+/* Remove margins because it is inside a grid */
+.payoff-date-card {
+    background: rgba(255, 165, 0, 0.08);
+    /* Slightly subtler */
+    border-color: rgba(255, 165, 0, 0.25);
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1rem;
+    /* Match other stat-rows */
+    margin: 0;
+    /* CRITICAL: Remove margin to prevent grid stretching */
+    box-shadow: none;
+    /* Flatten to match others, or keep subtle */
+}
+
+/* Ensure the date text is large and gold */
+.payoff-date-card .highlight-date {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #ffa726;
+    /* Orange/Gold */
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    margin-top: 0.25rem;
+    white-space: nowrap;
+    /* Prevent wrapping */
+}
+
+.payoff-date-card .label {
+    font-size: 0.75rem;
+    /* Match other labels */
+    margin-bottom: 0.25rem;
+}
+
+/* Editable Payment Amount */
+.payment-amount-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.payment-amount-input {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid #FFD700;
+    color: #FFD700;
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-align: center;
+    width: 200px;
+    outline: none;
+    margin-top: 0.5rem;
+    text-shadow: 0 2px 10px rgba(255, 215, 0, 0.2);
+}
+
+.edit-amount-pill {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.edit-amount-pill:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Enter Amount Button */
+/* Enter Amount Button */
+.enter-amount-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.6);
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin: 0 auto;
+    display: block;
+    width: fit-content;
+}
+
+.enter-amount-btn:hover {
+    border-color: #d4af37;
+    color: #d4af37;
+    background: rgba(212, 175, 55, 0.1);
+}

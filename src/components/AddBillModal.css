@@ -1,0 +1,210 @@
+/* AddBillModal.css */
+
+/* Reusing the glass pane and layout styles from WelcomeWizard for consistency */
+
+.add-bill-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.add-bill-modal-content {
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: rgba(10, 10, 10, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    padding: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.add-bill-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.add-bill-header h2 {
+    font-size: 1.5rem;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+}
+
+.add-bill-subtitle {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.95rem;
+}
+
+/* Form Styles - Mirroring WelcomeWizard */
+.bill-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.bill-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.bill-form-group input {
+    width: 100%;
+    background: rgba(20, 20, 20, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    padding: 0.9rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.bill-form-group input:focus {
+    outline: none;
+    border-color: #d4af37;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+.bill-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* Input with Icon */
+.input-with-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.currency-icon {
+    position: absolute;
+    left: 1rem;
+    color: #d4af37;
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.input-with-icon-wrapper input {
+    padding-left: 2.5rem;
+}
+
+/* Checkbox */
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #d4af37;
+    cursor: pointer;
+}
+
+/* Balance Section Animation Container */
+.balance-section {
+    background: rgba(212, 175, 55, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    margin-top: 1.5rem;
+    overflow: hidden;
+}
+
+/* Actions */
+.modal-form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2.5rem;
+}
+
+.hidden-btn {
+    display: none;
+    /* Used for form submission via Enter key */
+}
+
+.btn-cancel {
+    flex: 1;
+    padding: 0.75rem;
+    /* Reduced from 1rem */
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.8);
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    /* Reduced from 0.85rem */
+}
+
+.btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #fff;
+}
+
+.btn-submit {
+    flex: 2;
+    padding: 0.75rem;
+    /* Reduced from 1rem */
+    background: linear-gradient(135deg, #d4af37 0%, #c9a227 100%);
+    color: #000;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    /* Reduced from 0.9rem */
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+}
+
+.btn-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(212, 175, 55, 0.35);
+}
+
+.btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #444;
+}
+
+/* Scrollbar */
+.add-bill-modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.add-bill-modal-content::-webkit-scrollbar-track {
+    background: rgba(20, 20, 20, 0.5);
+}
+
+.add-bill-modal-content::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.3);
+    border-radius: 4px;
+}
+
+.add-bill-modal-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 175, 55, 0.5);
+}

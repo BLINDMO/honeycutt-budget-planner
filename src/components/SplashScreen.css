@@ -1,0 +1,87 @@
+.splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    overflow: hidden;
+}
+
+.splash-vignette {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse 70% 50% at 50% 50%,
+            rgba(10, 10, 10, 1) 0%,
+            rgba(0, 0, 0, 1) 100%);
+    pointer-events: none;
+}
+
+.splash-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 10;
+}
+
+/* Main Title */
+.splash-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 4.5rem;
+    font-weight: 300;
+    text-transform: uppercase;
+    color: #ffffff;
+    margin: 0;
+    text-shadow: 0 0 80px rgba(212, 175, 55, 0.25);
+}
+
+/* Animated Divider */
+.title-divider {
+    width: 100px;
+    height: 1px;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(212, 175, 55, 0.9) 50%,
+            transparent 100%);
+    margin: 1.5rem 0;
+    transform-origin: center;
+}
+
+/* Subtitle */
+.splash-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 400;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: #d4af37;
+    margin: 0;
+}
+
+/* Particles */
+.splash-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: rgba(212, 175, 55, 0.5);
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+}

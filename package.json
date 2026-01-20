@@ -1,0 +1,55 @@
+{
+  "name": "honeycutt-budget-planner",
+  "version": "1.0.0",
+  "description": "Professional budget tracking application with advanced debt payoff analytics",
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:main\" \"npm run dev:renderer\"",
+    "dev:main": "tsc -p tsconfig.main.json && electron .",
+    "dev:renderer": "vite",
+    "build": "npm run build:main && npm run build:renderer",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build:renderer": "vite build",
+    "package": "npm run build && electron-builder",
+    "start": "electron .",
+    "build:web": "vite build --outDir dist --base=/"
+  },
+  "keywords": [
+    "budget",
+    "finance",
+    "debt-tracking"
+  ],
+  "author": "Honeycutt Development Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.2",
+    "electron": "^33.3.1",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0",
+    "framer-motion": "^11.18.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "build": {
+    "appId": "com.honeycutt.budgetplanner",
+    "productName": "Honeycutt Budget Planner",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  }
+}
