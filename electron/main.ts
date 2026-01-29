@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, dialog, screen } from 'electron';
 import * as path from 'path';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
@@ -11,12 +11,59 @@ if (autoUpdater.logger && 'transports' in autoUpdater.logger) {
 }
 log.info('App starting...');
 
-// Auto-update configuration
-autoUpdater.autoDownload = false; // User chooses when to download
+// Auto-update configuration - fully automatic
+autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 
 let mainWindow: BrowserWindow | null = null;
 const budgetService = new BudgetDataService();
+
+function createMenu() {
+    const template: Electron.MenuItemConstructorOptions[] = [
+        {
+            label: 'File',
+            submenu: [
+                { role: 'quit', label: 'Exit' }
+            ]
+        },
+        {
+            label: 'Help',
+            submenu: [
+                {
+                    label: 'Check for Updates',
+                    click: () => {
+                        log.info('Manual update check from menu');
+                        autoUpdater.checkForUpdates().then((result) => {
+                            if (!result || !result.updateInfo || result.updateInfo.version === app.getVersion()) {
+                                dialog.showMessageBox(mainWindow!, {
+                                    type: 'info',
+                                    title: 'No Updates',
+                                    message: 'You are running the latest version.',
+                                    detail: `Current version: ${app.getVersion()}`
+                                });
+                            }
+                        }).catch((err) => {
+                            dialog.showMessageBox(mainWindow!, {
+                                type: 'error',
+                                title: 'Update Error',
+                                message: 'Could not check for updates.',
+                                detail: err.message
+                            });
+                        });
+                    }
+                },
+                { type: 'separator' },
+                {
+                    label: `Version ${app.getVersion()}`,
+                    enabled: false
+                }
+            ]
+        }
+    ];
+
+    const menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
+}
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -31,6 +78,8 @@ function createWindow() {
             contextIsolation: true,
             preload: path.join(__dirname, 'preload.js'),
             devTools: process.env.NODE_ENV === 'development',
+            // Disable OS-level zoom/scaling so the app renders at a consistent size
+            zoomFactor: 1.0,
         },
         show: false,
         center: true,
@@ -39,6 +88,19 @@ function createWindow() {
 
     // Start maximized (fullscreen window)
     mainWindow.maximize();
+
+    // Force zoom to 1.0 after load to counteract any OS DPI scaling
+    mainWindow.webContents.on('did-finish-load', () => {
+        mainWindow?.webContents.setZoomFactor(1.0);
+        mainWindow?.webContents.setZoomLevel(0);
+    });
+
+    // Prevent user from zooming with Ctrl+/- or Ctrl+scroll
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+        if (input.control && (input.key === '=' || input.key === '-' || input.key === '+' || input.key === '0')) {
+            event.preventDefault();
+        }
+    });
 
     // Load the app
     if (process.env.NODE_ENV === 'development') {
@@ -127,15 +189,16 @@ ipcMain.on('check-for-updates', () => {
 });
 
 app.whenReady().then(() => {
+    createMenu();
     createWindow();
 
-    // Check for updates 5 seconds after app starts
+    // Check for updates 3 seconds after app starts
     setTimeout(() => {
         if (process.env.NODE_ENV !== 'development') {
-            log.info('Checking for updates...');
+            log.info('Auto-checking for updates on startup...');
             autoUpdater.checkForUpdates();
         }
-    }, 5000);
+    }, 3000);
 });
 
 app.on('window-all-closed', () => {

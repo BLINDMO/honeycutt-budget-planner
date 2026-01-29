@@ -80,6 +80,10 @@ html {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  /* Lock base font size in px so rem units are immune to OS font/DPI settings */
+  font-size: 16px !important;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
 }
 
 body {
@@ -89,7 +93,7 @@ body {
   font-family: var(--font-primary);
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
-  font-size: clamp(14px, 1vw, 16px);
+  font-size: 0.9375rem; /* 15px at 16px base */
   line-height: 1.65;
   letter-spacing: 0.01em;
   -webkit-font-smoothing: antialiased;
