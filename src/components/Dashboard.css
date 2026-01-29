@@ -1036,6 +1036,142 @@
     position: relative;
 }
 
+/* ============================================
+   Past Month Summary View (Read-Only)
+   ============================================ */
+
+.past-month-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1rem;
+    margin-bottom: 0.75rem;
+    background: rgba(34, 197, 94, 0.08);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    border-radius: 0.5rem;
+}
+
+.past-month-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #000;
+    background: rgba(34, 197, 94, 0.85);
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.past-month-subtitle {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+}
+
+.past-month-header-row {
+    display: grid;
+    grid-template-columns: 1fr 120px 120px 60px;
+    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    margin-bottom: 0.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.past-month-header-row > div {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.past-header-amount,
+.past-header-method {
+    text-align: right;
+}
+
+.past-header-status {
+    text-align: center;
+}
+
+.past-bill-item {
+    display: grid;
+    grid-template-columns: 1fr 120px 120px 60px;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background 0.15s ease;
+}
+
+.past-bill-item:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.past-bill-name {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+    font-weight: 500;
+}
+
+.past-bill-amount {
+    font-size: 0.9rem;
+    color: rgba(34, 197, 94, 0.9);
+    font-weight: 600;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.past-bill-method {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.4);
+    text-align: right;
+}
+
+.past-bill-status {
+    text-align: center;
+}
+
+.past-paid-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    color: #22c55e;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.past-month-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+    background: rgba(212, 175, 55, 0.06);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    border-radius: 0.5rem;
+}
+
+.past-total-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.past-total-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #d4af37;
+    font-variant-numeric: tabular-nums;
+}
+
 .settings-header-btn {
     font-size: 1rem !important;
     padding: 0.25rem 0.5rem !important;
@@ -1096,6 +1232,19 @@
     background: rgba(255, 152, 0, 0.2);
     border: 1px solid rgba(255, 152, 0, 0.4);
     color: #ff9800;
+    padding: 0.1rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.past-badge {
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    color: #22c55e;
     padding: 0.1rem 0.5rem;
     border-radius: 4px;
     font-size: 0.6rem;

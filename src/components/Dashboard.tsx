@@ -224,6 +224,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
         [viewingMonth, activeMonth]
     );
 
+    const isPastMode = useMemo(() =>
+        DateUtils.compareMonths(viewingMonth, activeMonth) < 0,
+        [viewingMonth, activeMonth]
+    );
+
+    // Get history items for the viewing month (past months only)
+    const pastMonthHistory = useMemo(() => {
+        if (!isPastMode) return [];
+        return history.filter(h => {
+            const dueDateMonth = h.originalDueDate ? DateUtils.getMonthFromDate(h.originalDueDate) : null;
+            return dueDateMonth === viewingMonth;
+        });
+    }, [history, viewingMonth, isPastMode]);
+
     // Helper: get bills for a given month, projecting recurring bills forward
     const getBillsForMonth = (targetMonth: string) => {
         return bills
@@ -286,9 +300,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
         }
     };
 
-    // Boundaries
+    // Boundaries - can only go back 1 month before active (to see last month's summary)
     const canGoBack = useMemo(() => {
-        const minMonth = DateUtils.addMonthsToMonth(activeMonth, -12);
+        const minMonth = DateUtils.addMonthsToMonth(activeMonth, -1);
         return DateUtils.compareMonths(viewingMonth, minMonth) > 0;
     }, [viewingMonth, activeMonth]);
 
@@ -327,6 +341,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                                 <div className="month-title-container">
                                     <h2>{DateUtils.getMonthDisplay(viewingMonth)} Bills</h2>
                                     {isPreviewMode && <span className="preview-badge">PREVIEW</span>}
+                                    {isPastMode && <span className="past-badge">PAST</span>}
                                 </div>
                                 <button
                                     className="month-nav-arrow"
@@ -339,178 +354,234 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                             </div>
                             <div className="current-date-display">{DateUtils.getCurrentDateDisplay()}</div>
                         </div>
-                        <div className="header-controls">
-                            <button
-                                className="header-action-btn settings-header-btn"
-                                onClick={() => setShowSettingsModal(true)}
-                                title="Settings"
-                            >
-                                ⚙️
-                            </button>
-                            <button
-                                className="add-bill-mini-btn"
-                                onClick={addNewBill}
-                                title="Add New Bill"
-                            >
-                                Add Bill
-                            </button>
-                            <button
-                                className={`header-action-btn edit-mode-btn ${isEditMode ? 'active' : ''}`}
-                                onClick={() => setIsEditMode(!isEditMode)}
-                            >
-                                {isEditMode ? 'Done' : 'Delete a Bill'}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="bill-list-header">
-                        <div className="header-note">NOTES</div>
-                        <div className="header-date">Day</div>
-                        <div className="header-name">Bill Name</div>
-                        <div className="header-amount">Amount</div>
-                        <div className="header-balance">Balance</div>
-                        <div className="header-paid">Paid?</div>
-                    </div>
-
-                    <div className="bills-list">
-                        {unpaidBills.map((bill) => (
-                            <div key={bill.id} className="bill-item">
-                                {/* Col 1: Note or Delete */}
-                                <div className="bill-note-col">
-                                    {isEditMode ? (
-                                        <button
-                                            className="delete-bill-btn"
-                                            onClick={() => deleteBill(bill.id)}
-                                            title="Delete Bill"
-                                        >
-                                            -
-                                        </button>
-                                    ) : (
-                                        <button
-                                            className="add-note-btn"
-                                            onClick={() => setShowNoteFor(bill.id === showNoteFor ? null : bill.id)}
-                                            title={bill.note ? "Edit note" : "Add note"}
-                                            aria-label={bill.note ? `Edit note for ${bill.name}` : `Add note to ${bill.name}`}
-                                        >
-                                            📓
-                                        </button>
-                                    )}
-                                </div>
-
-                                {/* Col 2: Date */}
-                                <div className="bill-date">
-                                    {new Date(bill.dueDate).toLocaleDateString('en-US', {
-                                        month: '2-digit',
-                                        day: '2-digit',
-                                        year: 'numeric'
-                                    })}
-                                </div>
-
-                                {/* Col 3: Name & Note Input */}
-                                <div className="bill-name">
-                                    {showNoteFor === bill.id ? (
-                                        <div className="inline-note-input" onClick={(e) => e.stopPropagation()}>
-                                            <input
-                                                type="text"
-                                                placeholder="Enter note..."
-                                                defaultValue={bill.note || ''}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        const val = (e.target as HTMLInputElement).value;
-                                                        updateNote(bill.id, val);
-                                                        setShowNoteFor(null);
-                                                    } else if (e.key === 'Escape') {
-                                                        setShowNoteFor(null);
-                                                    }
-                                                }}
-                                                autoFocus
-                                            />
-                                            <button
-                                                className="save-note-mini-btn"
-                                                onClick={(e) => {
-                                                    const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                                                    updateNote(bill.id, input.value);
-                                                    setShowNoteFor(null);
-                                                }}
-                                            >
-                                                ✓
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            {bill.name}
-                                            {bill.note && (
-                                                <span style={{ opacity: 0.7, fontStyle: 'italic', marginLeft: '1rem', fontSize: '0.85em' }}>
-                                                    Note: {bill.note}
-                                                </span>
-                                            )}
-                                        </>
-                                    )}
-                                </div>
-
-                                {/* Col 4: Amount - Editable */}
-                                <div className="bill-amount">
-                                    {isEditMode ? (
-                                        <input
-                                            type="number"
-                                            className="edit-amount-input"
-                                            value={bill.amount}
-                                            onChange={(e) => updateBillAmount(bill.id, CalculationEngine.parseAmount(e.target.value))}
-                                            onClick={(e) => e.stopPropagation()}
-                                            step="0.01"
-                                            min="0"
-                                        />
-                                    ) : (
-                                        bill.amount === 0 && !bill.hasBalance ? (
-                                            <button
-                                                className="enter-amount-btn"
-                                                onClick={() => setShowAmountInputFor(bill.id)}
-                                            >
-                                                Enter Bill Amount
-                                            </button>
-                                        ) : (
-                                            CalculationEngine.formatCurrency(bill.amount)
-                                        )
-                                    )}
-                                </div>
-
-                                {/* Col 5: Balance */}
-                                <div className="bill-balance-col">
-                                    {bill.hasBalance && bill.balance && (
-                                        <>
-                                            <span className="balance-amount">
-                                                {CalculationEngine.formatCurrency(bill.balance)}
-                                            </span>
-                                            <button
-                                                className="payoff-info-btn"
-                                                onClick={() => setShowPayoffFor(bill.id)}
-                                                title="View payoff details"
-                                                aria-label={`View payoff details for ${bill.name}`}
-                                            >
-                                                ℹ
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-
-                                {/* Col 6: Paid */}
-                                <div className="bill-actions">
-                                    <button
-                                        className={`mark-paid-btn ${isPreviewMode ? 'disabled-preview' : ''}`}
-                                        onClick={() => isPreviewMode ? handlePreviewPayAttempt() : setShowPaymentModal(bill.id)}
-                                        title={isPreviewMode ? "Complete current month first" : "Mark as paid"}
-                                    >
-                                        {bill.isPaid ? '✓' : ''}
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                        {unpaidBills.length === 0 && (
-                            <div className="empty-state">
-                                <p>All bills paid! 🎉</p>
+                        {!isPastMode && (
+                            <div className="header-controls">
+                                <button
+                                    className="header-action-btn settings-header-btn"
+                                    onClick={() => setShowSettingsModal(true)}
+                                    title="Settings"
+                                >
+                                    ⚙️
+                                </button>
+                                <button
+                                    className="add-bill-mini-btn"
+                                    onClick={addNewBill}
+                                    title="Add New Bill"
+                                >
+                                    Add Bill
+                                </button>
+                                <button
+                                    className={`header-action-btn edit-mode-btn ${isEditMode ? 'active' : ''}`}
+                                    onClick={() => setIsEditMode(!isEditMode)}
+                                >
+                                    {isEditMode ? 'Done' : 'Delete a Bill'}
+                                </button>
                             </div>
                         )}
                     </div>
+
+                    {isPastMode ? (
+                        /* ========== PAST MONTH SUMMARY VIEW ========== */
+                        <>
+                            <div className="past-month-banner">
+                                <span className="past-month-badge">COMPLETED</span>
+                                <span className="past-month-subtitle">Monthly Summary</span>
+                            </div>
+
+                            <div className="past-month-header-row">
+                                <div className="past-header-name">Bill</div>
+                                <div className="past-header-amount">Paid</div>
+                                <div className="past-header-method">Method</div>
+                                <div className="past-header-status">Status</div>
+                            </div>
+
+                            <div className="bills-list">
+                                {pastMonthHistory.length > 0 ? (
+                                    pastMonthHistory.map((item) => (
+                                        <div key={item.id} className="past-bill-item">
+                                            <div className="past-bill-name">{item.name}</div>
+                                            <div className="past-bill-amount">
+                                                {CalculationEngine.formatCurrency(item.paidAmount || item.amount || 0)}
+                                            </div>
+                                            <div className="past-bill-method">
+                                                {item.paidMethod || '—'}
+                                            </div>
+                                            <div className="past-bill-status">
+                                                <span className="past-paid-check">✓</span>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="empty-state">
+                                        <p>No records for this month</p>
+                                    </div>
+                                )}
+
+                                {pastMonthHistory.length > 0 && (
+                                    <div className="past-month-total">
+                                        <span className="past-total-label">Total Paid</span>
+                                        <span className="past-total-value">
+                                            {CalculationEngine.formatCurrency(
+                                                pastMonthHistory.reduce((sum, h) => sum + (h.paidAmount || h.amount || 0), 0)
+                                            )}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        /* ========== ACTIVE / PREVIEW MONTH VIEW ========== */
+                        <>
+                            <div className="bill-list-header">
+                                <div className="header-note">NOTES</div>
+                                <div className="header-date">Day</div>
+                                <div className="header-name">Bill Name</div>
+                                <div className="header-amount">Amount</div>
+                                <div className="header-balance">Balance</div>
+                                <div className="header-paid">Paid?</div>
+                            </div>
+
+                            <div className="bills-list">
+                                {unpaidBills.map((bill) => (
+                                    <div key={bill.id} className="bill-item">
+                                        {/* Col 1: Note or Delete */}
+                                        <div className="bill-note-col">
+                                            {isEditMode ? (
+                                                <button
+                                                    className="delete-bill-btn"
+                                                    onClick={() => deleteBill(bill.id)}
+                                                    title="Delete Bill"
+                                                >
+                                                    -
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    className="add-note-btn"
+                                                    onClick={() => setShowNoteFor(bill.id === showNoteFor ? null : bill.id)}
+                                                    title={bill.note ? "Edit note" : "Add note"}
+                                                    aria-label={bill.note ? `Edit note for ${bill.name}` : `Add note to ${bill.name}`}
+                                                >
+                                                    📓
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Col 2: Date */}
+                                        <div className="bill-date">
+                                            {new Date(bill.dueDate).toLocaleDateString('en-US', {
+                                                month: '2-digit',
+                                                day: '2-digit',
+                                                year: 'numeric'
+                                            })}
+                                        </div>
+
+                                        {/* Col 3: Name & Note Input */}
+                                        <div className="bill-name">
+                                            {showNoteFor === bill.id ? (
+                                                <div className="inline-note-input" onClick={(e) => e.stopPropagation()}>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Enter note..."
+                                                        defaultValue={bill.note || ''}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                const val = (e.target as HTMLInputElement).value;
+                                                                updateNote(bill.id, val);
+                                                                setShowNoteFor(null);
+                                                            } else if (e.key === 'Escape') {
+                                                                setShowNoteFor(null);
+                                                            }
+                                                        }}
+                                                        autoFocus
+                                                    />
+                                                    <button
+                                                        className="save-note-mini-btn"
+                                                        onClick={(e) => {
+                                                            const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                                                            updateNote(bill.id, input.value);
+                                                            setShowNoteFor(null);
+                                                        }}
+                                                    >
+                                                        ✓
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    {bill.name}
+                                                    {bill.note && (
+                                                        <span style={{ opacity: 0.7, fontStyle: 'italic', marginLeft: '1rem', fontSize: '0.85em' }}>
+                                                            Note: {bill.note}
+                                                        </span>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+
+                                        {/* Col 4: Amount - Editable */}
+                                        <div className="bill-amount">
+                                            {isEditMode ? (
+                                                <input
+                                                    type="number"
+                                                    className="edit-amount-input"
+                                                    value={bill.amount}
+                                                    onChange={(e) => updateBillAmount(bill.id, CalculationEngine.parseAmount(e.target.value))}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    step="0.01"
+                                                    min="0"
+                                                />
+                                            ) : (
+                                                bill.amount === 0 && !bill.hasBalance ? (
+                                                    <button
+                                                        className="enter-amount-btn"
+                                                        onClick={() => setShowAmountInputFor(bill.id)}
+                                                    >
+                                                        Enter Bill Amount
+                                                    </button>
+                                                ) : (
+                                                    CalculationEngine.formatCurrency(bill.amount)
+                                                )
+                                            )}
+                                        </div>
+
+                                        {/* Col 5: Balance */}
+                                        <div className="bill-balance-col">
+                                            {bill.hasBalance && bill.balance && (
+                                                <>
+                                                    <span className="balance-amount">
+                                                        {CalculationEngine.formatCurrency(bill.balance)}
+                                                    </span>
+                                                    <button
+                                                        className="payoff-info-btn"
+                                                        onClick={() => setShowPayoffFor(bill.id)}
+                                                        title="View payoff details"
+                                                        aria-label={`View payoff details for ${bill.name}`}
+                                                    >
+                                                        ℹ
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+
+                                        {/* Col 6: Paid */}
+                                        <div className="bill-actions">
+                                            <button
+                                                className={`mark-paid-btn ${isPreviewMode ? 'disabled-preview' : ''}`}
+                                                onClick={() => isPreviewMode ? handlePreviewPayAttempt() : setShowPaymentModal(bill.id)}
+                                                title={isPreviewMode ? "Complete current month first" : "Mark as paid"}
+                                            >
+                                                {bill.isPaid ? '✓' : ''}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {unpaidBills.length === 0 && (
+                                    <div className="empty-state">
+                                        <p>All bills paid! 🎉</p>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Right Column */}
