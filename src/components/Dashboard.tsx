@@ -311,8 +311,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
         return DateUtils.compareMonths(viewingMonth, maxMonth) < 0;
     }, [viewingMonth, activeMonth]);
 
-    const handlePreviewPayAttempt = () => {
-        alert(`Please complete ${DateUtils.getMonthDisplay(activeMonth)}'s bills before paying bills in future months.`);
+    const handleAdvancePay = (billId: string) => {
+        setShowPaymentModal(billId);
     };
 
     return (
@@ -564,13 +564,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
 
                                         {/* Col 6: Paid */}
                                         <div className="bill-actions">
-                                            <button
-                                                className={`mark-paid-btn ${isPreviewMode ? 'disabled-preview' : ''}`}
-                                                onClick={() => isPreviewMode ? handlePreviewPayAttempt() : setShowPaymentModal(bill.id)}
-                                                title={isPreviewMode ? "Complete current month first" : "Mark as paid"}
-                                            >
-                                                {bill.isPaid ? '✓' : ''}
-                                            </button>
+                                            {isPreviewMode ? (
+                                                <button
+                                                    className={`advance-pay-btn ${bill.isPaid ? 'advance-paid' : ''}`}
+                                                    onClick={() => !bill.isPaid && handleAdvancePay(bill.id)}
+                                                    title={bill.isPaid ? "Paid in advance" : "Pay this bill in advance"}
+                                                >
+                                                    {bill.isPaid ? '✓' : 'Pay in Advance'}
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    className="mark-paid-btn"
+                                                    onClick={() => setShowPaymentModal(bill.id)}
+                                                    title="Mark as paid"
+                                                >
+                                                    {bill.isPaid ? '✓' : ''}
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}

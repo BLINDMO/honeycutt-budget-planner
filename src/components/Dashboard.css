@@ -1261,9 +1261,36 @@
     font-weight: 400;
 }
 
-.mark-paid-btn.disabled-preview {
-    opacity: 0.3;
-    cursor: not-allowed;
+/* (disabled-preview class kept for backwards compat but no longer actively used) */
+
+/* Pay in Advance button for future/preview months */
+.advance-pay-btn {
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    background: rgba(212, 175, 55, 0.12);
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    color: #d4af37;
+    cursor: pointer;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.advance-pay-btn:hover {
+    background: rgba(212, 175, 55, 0.25);
+    border-color: rgba(212, 175, 55, 0.6);
+    transform: scale(1.03);
+}
+
+/* When bill is already paid in advance - green check style */
+.advance-pay-btn.advance-paid {
+    background: rgba(76, 175, 80, 0.15);
+    border-color: rgba(76, 175, 80, 0.4);
+    color: #4CAF50;
+    font-size: 0.9rem;
 }
 
 .reset-modal-content {
