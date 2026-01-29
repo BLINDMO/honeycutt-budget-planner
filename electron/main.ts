@@ -16,6 +16,7 @@ autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 
 let mainWindow: BrowserWindow | null = null;
+let isManualUpdateCheck = false;
 const budgetService = new BudgetDataService();
 
 function createMenu() {
@@ -33,21 +34,25 @@ function createMenu() {
                     label: 'Check for Updates',
                     click: () => {
                         log.info('Manual update check from menu');
+                        isManualUpdateCheck = true;
                         autoUpdater.checkForUpdates().then((result) => {
                             if (!result || !result.updateInfo || result.updateInfo.version === app.getVersion()) {
                                 dialog.showMessageBox(mainWindow!, {
                                     type: 'info',
-                                    title: 'No Updates',
+                                    title: 'No Updates Available',
                                     message: 'You are running the latest version.',
-                                    detail: `Current version: ${app.getVersion()}`
+                                    detail: `Current version: v${app.getVersion()}`
                                 });
+                                isManualUpdateCheck = false;
                             }
+                            // If update IS available, the 'update-available' event handler will show a dialog
                         }).catch((err) => {
+                            isManualUpdateCheck = false;
                             dialog.showMessageBox(mainWindow!, {
                                 type: 'error',
-                                title: 'Update Error',
+                                title: 'Update Check Failed',
                                 message: 'Could not check for updates.',
-                                detail: err.message
+                                detail: `Error: ${err.message}\n\nMake sure you are connected to the internet.`
                             });
                         });
                     }
@@ -149,6 +154,18 @@ autoUpdater.on('update-available', (info) => {
         version: info.version,
         releaseDate: info.releaseDate
     });
+
+    // Show dialog when manually checking for updates
+    if (isManualUpdateCheck && mainWindow) {
+        isManualUpdateCheck = false;
+        dialog.showMessageBox(mainWindow, {
+            type: 'info',
+            title: 'Update Available',
+            message: `A new version (v${info.version}) is available!`,
+            detail: `It will be downloaded automatically and installed when you close the app.\n\nCurrent version: v${app.getVersion()}`,
+            buttons: ['OK']
+        });
+    }
 });
 
 autoUpdater.on('update-not-available', (info) => {

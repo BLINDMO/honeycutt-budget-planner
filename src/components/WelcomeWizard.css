@@ -13,8 +13,8 @@
     align-items: center;
     justify-content: center;
     background: #000000;
-    padding: 2rem;
-    overflow-y: auto;
+    padding: 1rem;
+    overflow: hidden;
 }
 
 /* ============================================================================
@@ -23,13 +23,15 @@
 
 .welcome-step,
 .add-bills-step {
-    max-width: 750px;
+    max-width: 700px;
     width: 100%;
-    padding: 3.5rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    padding: 2rem 2.5rem;
     text-align: center;
     background: rgba(10, 10, 10, 0.96);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 1.5rem;
+    border-radius: 1.25rem;
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5),
@@ -49,32 +51,35 @@
     right: 0;
     height: 2px;
     background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.5), transparent);
-    border-radius: 1.5rem 1.5rem 0 0;
+    border-radius: 1.25rem 1.25rem 0 0;
+    z-index: 1;
 }
 
 .add-bills-step {
-    max-width: 1200px; /* Reduced from 1400px for tablets */
-    max-height: 90vh;
-    overflow-y: auto;
+    max-width: 1100px;
     text-align: left;
-    padding: 3rem 4rem;
+    padding: 2rem 2.5rem;
 }
 
-/* Custom scrollbar for add-bills-step */
+/* Custom scrollbar for both steps */
+.welcome-step::-webkit-scrollbar,
 .add-bills-step::-webkit-scrollbar {
     width: 8px;
 }
 
+.welcome-step::-webkit-scrollbar-track,
 .add-bills-step::-webkit-scrollbar-track {
     background: rgba(20, 20, 20, 0.5);
     border-radius: 4px;
 }
 
+.welcome-step::-webkit-scrollbar-thumb,
 .add-bills-step::-webkit-scrollbar-thumb {
     background: rgba(212, 175, 55, 0.3);
     border-radius: 4px;
 }
 
+.welcome-step::-webkit-scrollbar-thumb:hover,
 .add-bills-step::-webkit-scrollbar-thumb:hover {
     background: rgba(212, 175, 55, 0.5);
 }
@@ -84,9 +89,9 @@
    ============================================================================ */
 
 .welcome-step h1 {
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 600;
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.75rem;
     color: #ffffff;
     letter-spacing: -0.03em;
     line-height: 1.2;
@@ -98,9 +103,9 @@
 
 .welcome-subtitle {
     color: rgba(255, 255, 255, 0.6);
-    font-size: 1.125rem;
-    margin-bottom: 3rem;
-    line-height: 1.7;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
     letter-spacing: 0.01em;
 }
 
@@ -108,9 +113,9 @@
 .date-confirmation {
     background: linear-gradient(135deg, rgba(20, 20, 20, 0.9) 0%, rgba(25, 25, 25, 0.85) 100%);
     border: 1px solid rgba(212, 175, 55, 0.15);
-    padding: 2.25rem 2.75rem;
-    border-radius: 1rem;
-    margin-bottom: 3rem;
+    padding: 1.25rem 2rem;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.05);
     position: relative;
@@ -130,8 +135,8 @@
 
 .date-label {
     color: rgba(212, 175, 55, 0.7);
-    font-size: 0.75rem;
-    margin-bottom: 0.625rem;
+    font-size: 0.7rem;
+    margin-bottom: 0.4rem;
     text-transform: uppercase;
     letter-spacing: 0.15em;
     font-weight: 600;
@@ -140,7 +145,7 @@
 
 .date-value {
     color: #d4af37;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 700;
     letter-spacing: -0.02em;
     position: relative;
@@ -152,8 +157,8 @@
    ============================================================================ */
 
 .add-bills-step h2 {
-    font-size: 1.875rem;
-    margin-bottom: 0.75rem;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
     color: #ffffff;
     text-align: center;
     font-weight: 500;
@@ -162,9 +167,9 @@
 
 .step-subtitle {
     color: rgba(255, 255, 255, 0.5);
-    margin-bottom: 2rem;
+    margin-bottom: 1.25rem;
     text-align: center;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     line-height: 1.5;
 }
 
@@ -175,37 +180,31 @@
 .wizard-content-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4rem;
+    gap: 2.5rem;
     align-items: start;
     position: relative;
-    /* Context for sticky */
 }
 
 @media (max-width: 900px) {
     .wizard-content-row {
         grid-template-columns: 1fr;
-        gap: 2rem;
+        gap: 1.5rem;
     }
 }
 
 .wizard-form-col {
     min-width: 0;
-    /* Prevent grid blowout */
-    padding-bottom: 4rem;
-    /* Ensure generous space at bottom of scroll */
+    padding-bottom: 1rem;
 }
 
 .wizard-preview-col {
-    min-height: 400px;
-    /* Ensure height for empty state */
+    min-height: 200px;
     display: flex;
     flex-direction: column;
     position: sticky;
-    top: 1rem;
-    max-height: calc(85vh - 8rem);
-    /* Limit height with padding */
+    top: 0.5rem;
+    max-height: calc(100vh - 12rem);
     overflow-y: auto;
-    /* Allow scrolling within the list if it gets too long */
 }
 
 /* ============================================================================
@@ -213,18 +212,18 @@
    ============================================================================ */
 
 .bill-form {
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .form-group {
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.85rem;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.35rem;
     color: rgba(255, 255, 255, 0.6);
-    font-size: 0.8125rem;
+    font-size: 0.8rem;
     font-weight: 500;
     letter-spacing: 0.02em;
 }
@@ -234,9 +233,9 @@
     background: rgba(20, 20, 20, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #ffffff;
-    padding: 0.9rem 1.125rem;
-    border-radius: 0.625rem;
-    font-size: 0.9375rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
     font-family: inherit;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -247,18 +246,10 @@
 }
 
 .form-group input:focus {
-    background: rgba(20, 20, 20, 0.95);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.form-group input:hover {
-    border-color: rgba(255, 255, 255, 0.15);
-}
-
-.form-group input:focus {
     outline: none;
     border-color: #d4af37;
     box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+    background: rgba(20, 20, 20, 0.95);
 }
 
 .form-group input::placeholder {
@@ -282,7 +273,7 @@
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 @media (max-width: 640px) {
@@ -304,16 +295,16 @@
 
 .input-icon {
     position: absolute;
-    left: 1rem;
+    left: 0.85rem;
     color: #d4af37;
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.95rem;
     z-index: 10;
     pointer-events: none;
 }
 
 .input-with-icon input {
-    padding-left: 2.5rem !important;
+    padding-left: 2.25rem !important;
     width: 100%;
 }
 
@@ -322,17 +313,17 @@
    ============================================================================ */
 
 .checkbox-group {
-    margin-top: 0.5rem;
+    margin-top: 0.25rem;
 }
 
 .checkbox-group label {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.6rem;
     cursor: pointer;
     color: rgba(255, 255, 255, 0.8);
-    font-size: 0.9375rem;
-    padding: 0.5rem 0;
+    font-size: 0.875rem;
+    padding: 0.35rem 0;
     transition: color 0.2s ease;
 }
 
@@ -341,8 +332,8 @@
 }
 
 .checkbox-group input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     cursor: pointer;
     accent-color: #d4af37;
     flex-shrink: 0;
@@ -354,19 +345,19 @@
 
 .radio-group {
     display: flex;
-    gap: 1.5rem;
-    margin-top: 0.5rem;
-    padding-bottom: 0.5rem;
+    gap: 1.25rem;
+    margin-top: 0.35rem;
+    padding-bottom: 0.25rem;
 }
 
 .radio-option {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     cursor: pointer;
     color: rgba(255, 255, 255, 0.8);
-    font-size: 0.9375rem;
-    padding: 0.5rem 0;
+    font-size: 0.875rem;
+    padding: 0.35rem 0;
     transition: color 0.2s ease;
 }
 
@@ -375,8 +366,8 @@
 }
 
 .radio-option input[type="radio"] {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     margin: 0;
     cursor: pointer;
     accent-color: #d4af37;
@@ -395,12 +386,20 @@
 
 .balance-fields {
     overflow: hidden;
-    margin-top: 1rem;
-    padding: 1.25rem;
+    margin-top: 0.5rem;
+    padding: 0.85rem;
     background: rgba(212, 175, 55, 0.05);
     border: 1px solid rgba(212, 175, 55, 0.15);
-    border-radius: 0.75rem;
+    border-radius: 0.625rem;
     will-change: transform, opacity;
+}
+
+.balance-fields .form-group {
+    margin-bottom: 0.6rem;
+}
+
+.balance-fields .form-group:last-child {
+    margin-bottom: 0;
 }
 
 /* ============================================================================
@@ -409,10 +408,9 @@
 
 .form-actions {
     display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
-    margin-bottom: 3rem;
-    /* Extra breathing room at bottom */
+    gap: 0.75rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
 }
 
 @media (max-width: 640px) {
@@ -428,12 +426,11 @@
 .btn-primary,
 .btn-secondary {
     flex: 1;
-    padding: 0.75rem 1.5rem;
-    /* Reduced height from 1rem */
+    padding: 0.65rem 1.25rem;
     border: none;
     border-radius: 0.5rem;
     font-weight: 600;
-    font-size: 0.8125rem;
+    font-size: 0.8rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     cursor: pointer;
@@ -485,18 +482,17 @@
 .bills-preview {
     background: rgba(15, 15, 15, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 1.25rem;
-    border-radius: 0.75rem;
+    padding: 1rem;
+    border-radius: 0.625rem;
     height: 100%;
-    /* Fill column */
     display: flex;
     flex-direction: column;
 }
 
 .bills-preview h3 {
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     color: rgba(255, 255, 255, 0.5);
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -509,14 +505,14 @@
 }
 
 .bills-preview li {
-    padding: 0.75rem 0;
+    padding: 0.5rem 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 0.9375rem;
+    font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.8);
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 .bills-preview li:last-child {
@@ -527,7 +523,7 @@
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     flex-wrap: wrap;
 }
 
@@ -538,11 +534,11 @@
 /* Balance Badge */
 .balance-badge {
     display: inline-block;
-    padding: 0.25rem 0.5rem;
+    padding: 0.15rem 0.4rem;
     background: rgba(212, 175, 55, 0.15);
     border: 1px solid rgba(212, 175, 55, 0.3);
     border-radius: 0.25rem;
-    font-size: 0.6875rem;
+    font-size: 0.625rem;
     font-weight: 600;
     color: #d4af37;
     text-transform: uppercase;
@@ -552,8 +548,8 @@
 /* Remove Button */
 .btn-remove {
     flex-shrink: 0;
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -561,7 +557,7 @@
     border: 1px solid rgba(255, 50, 50, 0.2);
     border-radius: 0.25rem;
     color: rgba(255, 100, 100, 0.8);
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     cursor: pointer;
     transition: all 0.2s ease;
     padding: 0;
@@ -580,15 +576,16 @@
 }
 
 /* ============================================================================
-   GLASS PANE EFFECT
+   GLASS PANE EFFECT (local override for wizard)
    ============================================================================ */
 
-.glass-pane {
+.welcome-wizard .glass-pane {
     position: relative;
-    overflow: hidden;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
 }
 
-.glass-pane::before {
+.welcome-wizard .glass-pane::before {
     content: '';
     position: absolute;
     top: 0;
@@ -599,24 +596,32 @@
             transparent,
             rgba(255, 255, 255, 0.1),
             transparent);
+    z-index: 1;
 }
 
 /* ============================================================================
    RESPONSIVE DESIGN
    ============================================================================ */
 
-@media (max-width: 640px) {
-    .welcome-wizard {
-        padding: 1rem;
-    }
-
-    .welcome-step,
+@media (max-width: 1200px) {
     .add-bills-step {
-        padding: 2rem 1.5rem;
+        max-width: 95vw;
+        padding: 1.5rem 2rem;
     }
 
-    .welcome-step h1 {
-        font-size: 1.5rem;
+    .wizard-content-row {
+        gap: 2rem;
+    }
+}
+
+@media (max-width: 900px) {
+    .welcome-step {
+        max-width: 90vw;
+    }
+
+    .add-bills-step {
+        max-width: 95vw;
+        padding: 1.5rem;
     }
 
     .add-bills-step h2 {
@@ -624,61 +629,74 @@
     }
 }
 
-/* Hide spin buttons for number inputs */
-.form-group input[type="number"]::-webkit-inner-spin-button,
-.form-group input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    appearance: none;
-    margin: 0;
-}
-
-.form-group input[type="number"] {
-    -moz-appearance: textfield;
-    appearance: textfield;
-}
-
-/* Additional responsive breakpoints for better scaling */
-@media (max-width: 1200px) {
-    .add-bills-step {
-        max-width: 1100px;
-        padding: 2.5rem 3rem;
-    }
-
-    .wizard-content-row {
-        gap: 3rem;
-    }
-}
-
-@media (max-width: 900px) {
-    .welcome-step {
-        max-width: 600px;
-    }
-
-    .add-bills-step {
-        max-width: 95vw;
-        padding: 2rem;
-    }
-
-    .add-bills-step h2 {
-        font-size: 1.5rem;
-    }
-}
-
 @media (max-width: 768px) {
     .welcome-step {
-        max-width: 90vw;
-        padding: 2.5rem 2rem;
+        max-width: 95vw;
+        padding: 1.5rem;
     }
 
     .welcome-step h1 {
-        font-size: 1.875rem;
+        font-size: 1.5rem;
     }
 
     .welcome-subtitle {
-        font-size: 1rem;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .date-confirmation {
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
     }
 
     .date-value {
-        font-size: 1.125rem;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .welcome-wizard {
+        padding: 0.5rem;
+    }
+
+    .welcome-step,
+    .add-bills-step {
+        padding: 1.25rem 1rem;
+        border-radius: 0.75rem;
+    }
+
+    .welcome-step h1 {
+        font-size: 1.25rem;
+    }
+
+    .add-bills-step h2 {
+        font-size: 1.1rem;
+    }
+}
+
+/* Very small heights (e.g. 600px tall screens) */
+@media (max-height: 700px) {
+    .welcome-step h1 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .welcome-subtitle {
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+    }
+
+    .date-confirmation {
+        padding: 0.85rem 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .date-value {
+        font-size: 1rem;
+    }
+
+    .welcome-step,
+    .add-bills-step {
+        padding: 1.25rem 1.5rem;
     }
 }
