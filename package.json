@@ -7,10 +7,11 @@
     "dev": "concurrently \"npm run dev:main\" \"npm run dev:renderer\"",
     "dev:main": "tsc -p tsconfig.main.json && electron .",
     "dev:renderer": "vite",
-    "build": "npm run build:main && npm run build:renderer",
+    "build": "npm run build:web",
     "build:main": "tsc -p tsconfig.main.json",
     "build:renderer": "vite build",
-    "package": "npm run build && electron-builder",
+    "build:electron": "npm run build:main && npm run build:renderer",
+    "package": "npm run build:electron && electron-builder",
     "start": "electron .",
     "build:web": "vite build --outDir dist --base=/"
   },
@@ -27,13 +28,15 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.1.2",
-    "electron": "^33.3.1",
-    "electron-builder": "^25.1.8",
+    "electron": "^40.0.0",
+    "electron-builder": "^26.6.0",
     "typescript": "^5.7.3",
     "vite": "^6.0.7"
   },
   "dependencies": {
     "date-fns": "^4.1.0",
+    "electron-log": "^5.4.3",
+    "electron-updater": "^6.7.3",
     "framer-motion": "^11.18.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -42,14 +45,26 @@
     "appId": "com.honeycutt.budgetplanner",
     "productName": "Honeycutt Budget Planner",
     "directories": {
-      "output": "release"
+      "output": "build-output"
     },
     "files": [
       "dist/**/*",
       "package.json"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "BLINDMO",
+      "repo": "honeycutt-budget-planner",
+      "private": false
+    },
     "win": {
       "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     }
   }
 }

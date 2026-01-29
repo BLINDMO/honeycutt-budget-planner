@@ -3,6 +3,8 @@
  * Implements mathematically rigorous financial calculations with precision arithmetic
  */
 
+import { DateUtils } from './DateUtils';
+
 export interface PayoffProjection {
     monthsToPayoff: number;
     totalInterestPaid: number;
@@ -24,6 +26,31 @@ export interface PayoffComparison {
 
 export class CalculationEngine {
     /**
+     * Safely parse number input, returning 0 for invalid values
+     */
+    static parseAmount(value: string | number): number {
+        if (typeof value === 'number') {
+            return isNaN(value) || !isFinite(value) ? 0 : value;
+        }
+        const parsed = parseFloat(value);
+        return isNaN(parsed) || !isFinite(parsed) ? 0 : parsed;
+    }
+
+    /**
+     * Convert dollars to cents for precise arithmetic
+     */
+    private static toCents(dollars: number): number {
+        return Math.round(dollars * 100);
+    }
+
+    /**
+     * Convert cents back to dollars
+     */
+    private static toDollars(cents: number): number {
+        return cents / 100;
+    }
+
+    /**
      * Calculate payoff timeline with compound interest
      * @param balance - Current outstanding balance
      * @param monthlyPayment - Monthly payment amount
@@ -35,6 +62,11 @@ export class CalculationEngine {
         monthlyPayment: number,
         annualInterestRate: number = 0
     ): PayoffProjection {
+        // Safely parse all inputs
+        balance = this.parseAmount(balance);
+        monthlyPayment = this.parseAmount(monthlyPayment);
+        annualInterestRate = this.parseAmount(annualInterestRate);
+
         if (balance <= 0 || monthlyPayment <= 0) {
             return {
                 monthsToPayoff: 0,
@@ -44,51 +76,54 @@ export class CalculationEngine {
             };
         }
 
+        // Work in cents to avoid floating-point precision errors
         const monthlyRate = annualInterestRate / 12;
-        let remainingBalance = balance;
-        let totalInterest = 0;
+        let remainingCents = this.toCents(balance);
+        let totalInterestCents = 0;
         let month = 0;
         const breakdown: PayoffProjection['monthlyBreakdown'] = [];
 
         // Safety limit to prevent infinite loops
         const maxMonths = 600; // 50 years max
 
-        while (remainingBalance > 0.01 && month < maxMonths) {
+        while (remainingCents > 0 && month < maxMonths) {
             month++;
 
-            // Calculate interest for this month
-            const interestCharge = remainingBalance * monthlyRate;
+            // Calculate interest in cents
+            const interestCents = Math.round((remainingCents * monthlyRate) / 100);
 
             // Determine actual payment (might be less than monthly if final payment)
-            const totalPaymentNeeded = remainingBalance + interestCharge;
-            const actualPayment = Math.min(monthlyPayment, totalPaymentNeeded);
+            const totalPaymentNeededCents = remainingCents + interestCents;
+            const actualPaymentCents = Math.min(this.toCents(monthlyPayment), totalPaymentNeededCents);
 
-            // Calculate principal portion
-            const principalPayment = actualPayment - interestCharge;
+            // Calculate principal portion in cents
+            const principalCents = actualPaymentCents - interestCents;
 
-            // Update balance
-            remainingBalance -= principalPayment;
-            totalInterest += interestCharge;
+            // Update balance in cents
+            remainingCents -= principalCents;
+            totalInterestCents += interestCents;
 
             breakdown.push({
                 month,
-                payment: this.roundCurrency(actualPayment),
-                principal: this.roundCurrency(principalPayment),
-                interest: this.roundCurrency(interestCharge),
-                remainingBalance: this.roundCurrency(Math.max(0, remainingBalance)),
+                payment: this.toDollars(actualPaymentCents),
+                principal: this.toDollars(principalCents),
+                interest: this.toDollars(interestCents),
+                remainingBalance: Math.max(0, this.toDollars(remainingCents)),
             });
 
             // Exit if balance is effectively zero
-            if (remainingBalance < 0.01) {
-                remainingBalance = 0;
+            if (remainingCents <= 0) {
+                remainingCents = 0;
                 break;
             }
         }
 
+        const initialBalanceCents = this.toCents(balance);
+
         return {
             monthsToPayoff: month,
-            totalInterestPaid: this.roundCurrency(totalInterest),
-            totalAmountPaid: this.roundCurrency(balance + totalInterest),
+            totalInterestPaid: this.toDollars(totalInterestCents),
+            totalAmountPaid: this.toDollars(initialBalanceCents + totalInterestCents),
             monthlyBreakdown: breakdown,
         };
     }
@@ -124,16 +159,10 @@ export class CalculationEngine {
         bills: Array<{ amount: number; dueDate: string; isPaid: boolean }>,
         days: number
     ): number {
-        const now = new Date();
-        const targetDate = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
-
         return this.roundCurrency(
             bills
                 .filter(b => !b.isPaid)
-                .filter(b => {
-                    const dueDate = new Date(b.dueDate);
-                    return dueDate >= now && dueDate <= targetDate;
-                })
+                .filter(b => DateUtils.isWithinDays(b.dueDate, days))
                 .reduce((sum, bill) => sum + bill.amount, 0)
         );
     }

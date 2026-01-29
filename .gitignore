@@ -9,6 +9,7 @@ dist/
 build/
 release/
 out/
+build-output/
 
 # Environment variables
 .env
@@ -20,6 +21,7 @@ out/
 # IDE and editor files
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 *~
@@ -32,6 +34,7 @@ out/
 .Trashes
 ehthumbs.db
 Thumbs.db
+*.lnk
 
 # Logs
 logs
@@ -95,3 +98,4 @@ jspm_packages/
 # Vercel
 .vercel
 node_modules
+.env*.local

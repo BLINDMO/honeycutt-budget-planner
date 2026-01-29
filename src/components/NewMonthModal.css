@@ -1,0 +1,55 @@
+.new-month-modal {
+    max-width: 450px !important;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.new-month-info {
+    margin: 1.5rem 0 2rem 0;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.new-month-info p {
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.new-month-info ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.new-month-info li {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: flex-start;
+}
+
+.new-month-info li:last-child {
+    margin-bottom: 0;
+}
+
+.new-month-info li::before {
+    content: "•";
+    color: #d4af37;
+    font-weight: bold;
+    display: inline-block;
+    width: 1em;
+    flex-shrink: 0;
+}
+
+.confirm-btn {
+    background: linear-gradient(135deg, #d4af37 0%, #aa8c2c 100%) !important;
+    color: black !important;
+    font-weight: 600 !important;
+}
+
+.confirm-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}

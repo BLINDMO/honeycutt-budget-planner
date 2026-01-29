@@ -1,0 +1,261 @@
+/* Pay Info Header - Compact top bar for incoming pay display */
+
+.pay-info-header {
+    background: rgba(15, 15, 15, 0.95);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.5rem 1.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.pay-info-header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.pay-info-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #d4af37;
+    white-space: nowrap;
+}
+
+.pay-info-empty-text {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.3);
+    font-style: italic;
+}
+
+.pay-info-items {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex: 1;
+}
+
+.pay-info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.pay-info-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.pay-info-prefix {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.75rem;
+}
+
+.pay-info-name {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.pay-info-days {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.pay-info-days strong {
+    color: #22c55e;
+    font-weight: 700;
+}
+
+.pay-info-date {
+    color: #22c55e;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.pay-delete-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 44px; /* WCAG touch target */
+    min-height: 44px; /* WCAG touch target */
+    border-radius: 50%;
+    background: rgba(255, 50, 50, 0.2);
+    border: none;
+    color: #ff6b6b;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.25rem;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+
+.pay-delete-btn:hover {
+    opacity: 1;
+    background: rgba(255, 50, 50, 0.4);
+    transform: scale(1.1);
+}
+
+.pay-delete-indicator {
+    width: 28px;
+    height: 28px;
+    min-width: 44px; /* WCAG touch target */
+    min-height: 44px; /* WCAG touch target */
+    border-radius: 50%;
+    background: rgba(255, 50, 50, 0.15);
+    border: 1px solid rgba(255, 50, 50, 0.3);
+    color: #ff6b6b;
+    font-size: 16px;
+    line-height: 1;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.5rem;
+    transition: all 0.2s ease;
+    opacity: 0.9;
+    padding-bottom: 2px;
+}
+
+.pay-delete-indicator:hover {
+    opacity: 1;
+    background: rgba(255, 50, 50, 0.4);
+    transform: scale(1.15);
+    border-color: #ff6b6b;
+}
+
+.btn-danger-text {
+    background: transparent;
+    border: 1px solid rgba(255, 50, 50, 0.3);
+    color: #ff6b6b;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-danger-text:hover {
+    background: rgba(255, 50, 50, 0.1);
+    border-color: #ff6b6b;
+}
+
+.add-pay-header-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 44px; /* WCAG touch target */
+    min-height: 44px; /* WCAG touch target */
+    border-radius: 50%;
+    background: rgba(212, 175, 55, 0.15);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: #d4af37;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.add-pay-header-btn:hover {
+    background: rgba(212, 175, 55, 0.25);
+    transform: scale(1.15);
+}
+
+/* Pay Info Form Modal */
+.pay-info-modal {
+    max-width: 400px !important;
+}
+
+.pay-info-modal h3 {
+    margin-bottom: 1.5rem;
+    color: #d4af37;
+}
+
+.pay-form-group {
+    margin-bottom: 1rem;
+}
+
+.pay-form-group label {
+    display: block;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.pay-form-group input,
+.pay-form-group select {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.75rem 1rem;
+    color: white;
+    font-size: 0.95rem;
+    border-radius: 6px;
+}
+
+.pay-form-group input:focus,
+.pay-form-group select:focus {
+    border-color: #d4af37;
+    outline: none;
+}
+
+.pay-form-group select {
+    cursor: pointer;
+}
+
+.pay-form-group select option {
+    background: #1a1a1a;
+    color: white;
+}
+
+/* Date input calendar picker styling */
+.pay-form-group input[type="date"] {
+    cursor: pointer;
+    position: relative;
+}
+
+.pay-form-group input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+    padding: 4px;
+    margin-right: -4px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.pay-form-group input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+/* Firefox date picker */
+.pay-form-group input[type="date"]::-moz-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .pay-info-header {
+        padding: 0.4rem 0.75rem;
+    }
+
+    .pay-info-items {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+
+    .pay-info-item {
+        font-size: 0.75rem;
+    }
+}

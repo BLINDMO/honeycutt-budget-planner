@@ -1,0 +1,47 @@
+.amount-modal {
+    max-width: 380px !important;
+    text-align: center;
+}
+
+.amount-subtitle {
+    margin-bottom: 2rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+}
+
+.amount-subtitle strong {
+    color: white;
+}
+
+.amount-input-group {
+    position: relative;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.amount-input-group input {
+    width: 200px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid rgba(212, 175, 55, 0.5);
+    color: #d4af37;
+    font-size: 2rem;
+    font-weight: 600;
+    text-align: center;
+    padding: 0.5rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.amount-input-group input:focus {
+    border-bottom-color: #d4af37;
+}
+
+.amount-input-group .currency-prefix {
+    font-size: 2rem;
+    color: rgba(212, 175, 55, 0.5);
+    margin-right: 0.25rem;
+    font-weight: 600;
+}

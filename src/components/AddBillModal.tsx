@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { DateUtils } from '../core/DateUtils';
+import { CalculationEngine } from '../core/CalculationEngine';
+import type { Bill } from '../types';
 import './AddBillModal.css';
 
 interface AddBillModalProps {
     onClose: () => void;
-    onAdd: (bill: any) => void;
+    onAdd: (bill: Bill) => void;
 }
 
 export const AddBillModal: React.FC<AddBillModalProps> = ({ onClose, onAdd }) => {
@@ -17,42 +20,117 @@ export const AddBillModal: React.FC<AddBillModalProps> = ({ onClose, onAdd }) =>
     const [monthlyPayment, setMonthlyPayment] = useState('');
     const [interestRate, setInterestRate] = useState('');
 
+    // Ref for focusing input
+    const nameInputRef = useRef<HTMLInputElement>(null);
+
+    // Focus the input after animation completes
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            nameInputRef.current?.focus();
+        }, 350); // Slightly longer than animation duration (300ms)
+        return () => clearTimeout(timer);
+    }, []);
+
     const isValidDay = (d: number) => d >= 1 && d <= 31;
+
+    // Check if day exists in all months and provide warning
+    const validateDay = (d: number): { valid: boolean; warning?: string } => {
+        if (d < 1 || d > 31) return { valid: false };
+
+        const today = new Date();
+        const daysInCurrentMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+
+        if (d > daysInCurrentMonth) {
+            return {
+                valid: true,
+                warning: `Day ${d} doesn't exist in ${today.toLocaleString('en-US', { month: 'long' })}. Bill will be due on the last day of months with fewer than ${d} days.`
+            };
+        } else if (d > 28) {
+            return {
+                valid: true,
+                warning: `Some months have fewer than ${d} days. Bill will be due on the last day of those months.`
+            };
+        }
+
+        return { valid: true };
+    };
+
+    const dayValidation = day ? validateDay(parseInt(day)) : { valid: true };
 
     const isFormValid = name.trim() !== '' &&
         amount !== '' &&
         day !== '' &&
         isValidDay(parseInt(day));
 
-    // Calculate next due date based on day
+    // Calculate next due date based on day (safely handles month overflow)
     const getNextDueDate = (dayOfMonth: number) => {
         const today = new Date();
-        const currentYear = today.getFullYear();
-        const currentMonth = today.getMonth();
+        const year = today.getFullYear();
+        const month = today.getMonth();
 
-        let date = new Date(currentYear, currentMonth, dayOfMonth);
+        // Get days in current month
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const actualDay = Math.min(dayOfMonth, daysInMonth);
 
-        // If date passed, move to next month
+        let date = new Date(year, month, actualDay);
+
+        // If date already passed this month, move to next month
+        today.setHours(0, 0, 0, 0);
+        date.setHours(0, 0, 0, 0);
+
         if (date < today) {
-            date = new Date(currentYear, currentMonth + 1, dayOfMonth);
+            // Move to next month
+            const nextMonth = month + 1;
+            const daysInNextMonth = new Date(year, nextMonth + 1, 0).getDate();
+            const nextActualDay = Math.min(dayOfMonth, daysInNextMonth);
+            date = new Date(year, nextMonth, nextActualDay);
         }
-        return date.toISOString();
+
+        return DateUtils.toLocalDateString(date);
     };
 
     const handleSubmit = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         if (!isFormValid) return;
 
+        // Safely parse all numeric values
+        const parsedAmount = CalculationEngine.parseAmount(amount);
+        const parsedBalance = hasBalance ? CalculationEngine.parseAmount(balance) : undefined;
+        const parsedMonthlyPayment = hasBalance ? CalculationEngine.parseAmount(monthlyPayment) : undefined;
+        const parsedInterestRate = hasBalance ? CalculationEngine.parseAmount(interestRate) : undefined;
+
+        // Validate amount is greater than 0
+        if (parsedAmount <= 0) {
+            alert('Please enter a valid amount greater than 0');
+            return;
+        }
+
+        // Validate balance fields if has balance
+        if (hasBalance) {
+            if (parsedBalance && parsedBalance <= 0) {
+                alert('Balance must be greater than 0');
+                return;
+            }
+            if (parsedMonthlyPayment && parsedMonthlyPayment <= 0) {
+                alert('Monthly payment must be greater than 0');
+                return;
+            }
+            if (parsedInterestRate && parsedInterestRate < 0) {
+                alert('Interest rate cannot be negative');
+                return;
+            }
+        }
+
         const newBill = {
             id: crypto.randomUUID(),
             name: name.trim(),
-            amount: parseFloat(amount),
+            amount: parsedAmount,
             dueDate: getNextDueDate(parseInt(day)),
             isPaid: false,
             hasBalance: hasBalance,
-            balance: hasBalance && balance ? parseFloat(balance) : undefined,
-            monthlyPayment: hasBalance && monthlyPayment ? parseFloat(monthlyPayment) : undefined,
-            interestRate: hasBalance && interestRate ? parseFloat(interestRate) : undefined,
+            balance: parsedBalance,
+            monthlyPayment: parsedMonthlyPayment,
+            interestRate: parsedInterestRate,
             isRecurring: true,
             note: ''
         };
@@ -87,6 +165,7 @@ export const AddBillModal: React.FC<AddBillModalProps> = ({ onClose, onAdd }) =>
                     <div className="bill-form-group">
                         <label>Bill Name</label>
                         <input
+                            ref={nameInputRef}
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
@@ -125,6 +204,16 @@ export const AddBillModal: React.FC<AddBillModalProps> = ({ onClose, onAdd }) =>
                                 max="31"
                                 required
                             />
+                            {dayValidation.warning && (
+                                <div className="day-warning" style={{
+                                    fontSize: '0.85em',
+                                    color: '#ffa500',
+                                    marginTop: '0.3rem',
+                                    fontStyle: 'italic'
+                                }}>
+                                    ⚠️ {dayValidation.warning}
+                                </div>
+                            )}
                         </div>
                     </div>
 

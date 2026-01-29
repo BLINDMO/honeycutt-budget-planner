@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { SplashScreen } from './components/SplashScreen';
 import { WelcomeWizard } from './components/WelcomeWizard';
 import { Dashboard } from './components/Dashboard';
-import { TutorialOverlay } from './components/TutorialOverlay';
+import { UpdateNotification } from './components/UpdateNotification';
 import './styles/design-system.css';
 
 const STORAGE_KEY = 'honeycutt_budget_data';
@@ -27,13 +28,20 @@ interface Bill {
     paidMethod?: string;
 }
 
+interface PayInfo {
+    id: string;
+    name: string;          // e.g., "Main Job", "Side Gig"
+    lastPayDate: string;   // ISO date string (user picks month/day/year)
+    frequency: 'weekly' | 'biweekly' | 'semimonthly' | 'monthly';
+}
+
 interface BudgetData {
     bills: Bill[];
     paidHistory: any[];
     lastReset: string;
     isFirstTime: boolean;
-    hasSeenTutorial: boolean;
     theme: 'dark' | 'light';
+    payInfos?: PayInfo[];
 }
 
 
@@ -43,18 +51,19 @@ function App() {
         paidHistory: [],
         lastReset: new Date().toISOString(),
         isFirstTime: true,
-        hasSeenTutorial: false,
         theme: 'dark',
+        payInfos: [],
     }), []);
 
     const [showSplash, setShowSplash] = useState(true);
     const [budgetData, setBudgetData] = useState<BudgetData | null>(null);
     const [loading, setLoading] = useState(true);
-    const [showTutorial, setShowTutorial] = useState(false);
-
-    // ========================================================================
-    // DATA PERSISTENCE LOGIC
-    // ========================================================================
+    const [updateInfo, setUpdateInfo] = useState<{
+        available: boolean;
+        downloaded: boolean;
+        version: string;
+        downloadProgress?: number;
+    } | null>(null);
 
     // ========================================================================
     // DATA PERSISTENCE LOGIC
@@ -93,11 +102,9 @@ function App() {
     const handleResetApp = useCallback(() => {
         // Clear all local storage
         localStorage.clear();
-        // Reset state to default
+        // Reset state to default - React will re-render with fresh state
         setBudgetData({ ...DEFAULT_BUDGET_DATA, lastReset: new Date().toISOString() });
-        // Force reload to ensure clean slate if needed, or just let React handle it
-        // But for "First Run" state, setting budgetData to default (isFirstTime: true) is enough.
-        window.location.reload(); // safest way to ensure completely fresh start including all states
+        // No need for window.location.reload() - state reset triggers re-render
     }, [DEFAULT_BUDGET_DATA]);
 
     // ========================================================================
@@ -107,6 +114,45 @@ function App() {
     useEffect(() => {
         loadBudgetData();
     }, [loadBudgetData]);
+
+    // Auto-update listeners (only in Electron)
+    useEffect(() => {
+        if (!window.electronAPI) {
+            console.log('Not running in Electron - update system disabled');
+            return;
+        }
+
+        window.electronAPI.onUpdateAvailable((info: any) => {
+            console.log('Update available:', info);
+            setUpdateInfo({
+                available: true,
+                downloaded: false,
+                version: info.version
+            });
+        });
+
+        window.electronAPI.onUpdateProgress((percent: number) => {
+            setUpdateInfo(prev => prev ? {
+                ...prev,
+                downloadProgress: percent
+            } : null);
+        });
+
+        window.electronAPI.onUpdateDownloaded((info: any) => {
+            console.log('Update downloaded:', info);
+            setUpdateInfo({
+                available: true,
+                downloaded: true,
+                version: info.version,
+                downloadProgress: 100
+            });
+        });
+
+        window.electronAPI.onUpdateError((message: string) => {
+            console.error('Update error:', message);
+            setUpdateInfo(null);
+        });
+    }, []);
 
     // ========================================================================
     // EVENT HANDLERS
@@ -118,24 +164,11 @@ function App() {
             paidHistory: [],
             lastReset: new Date().toISOString(),
             isFirstTime: false,
-            hasSeenTutorial: false,
             theme: 'dark',
         };
 
         saveBudgetData(newData);
-
-        // Show tutorial after wizard if bills were added
-        if (bills.length > 0) {
-            setShowTutorial(true);
-        }
     }, [saveBudgetData]);
-
-    const handleTutorialComplete = useCallback(() => {
-        if (budgetData) {
-            saveBudgetData({ ...budgetData, hasSeenTutorial: true });
-        }
-        setShowTutorial(false);
-    }, [budgetData, saveBudgetData]);
 
     const handleBillsChange = useCallback((bills: Bill[], history?: any[]) => {
         if (budgetData) {
@@ -149,6 +182,27 @@ function App() {
 
     const handleSplashComplete = useCallback(() => {
         setShowSplash(false);
+    }, []);
+
+    const handlePayInfosChange = useCallback((payInfos: PayInfo[]) => {
+        if (budgetData) {
+            saveBudgetData({
+                ...budgetData,
+                payInfos
+            });
+        }
+    }, [budgetData, saveBudgetData]);
+
+    const handleDownloadUpdate = useCallback(() => {
+        window.electronAPI?.downloadUpdate();
+    }, []);
+
+    const handleInstallUpdate = useCallback(() => {
+        window.electronAPI?.installUpdate();
+    }, []);
+
+    const handleDismissUpdate = useCallback(() => {
+        setUpdateInfo(null);
     }, []);
 
     // ========================================================================
@@ -176,12 +230,25 @@ function App() {
             <Dashboard
                 initialBills={budgetData?.bills || []}
                 initialHistory={budgetData?.paidHistory || []}
+                initialPayInfos={budgetData?.payInfos || []}
                 onDataChange={handleBillsChange}
+                onPayInfosChange={handlePayInfosChange}
                 onReset={handleResetApp}
             />
-            {showTutorial && (
-                <TutorialOverlay onComplete={handleTutorialComplete} />
-            )}
+
+            {/* Update Notification */}
+            <AnimatePresence>
+                {updateInfo && (
+                    <UpdateNotification
+                        version={updateInfo.version}
+                        downloaded={updateInfo.downloaded}
+                        downloadProgress={updateInfo.downloadProgress}
+                        onDownload={handleDownloadUpdate}
+                        onInstall={handleInstallUpdate}
+                        onDismiss={handleDismissUpdate}
+                    />
+                )}
+            </AnimatePresence>
         </>
     );
 }

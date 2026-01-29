@@ -1,0 +1,232 @@
+/* Pay Information Module Styles */
+
+.pay-info-module {
+    padding: 1rem !important;
+}
+
+.pay-info-module .pane-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pay-info-module .pane-header h2 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+}
+
+.add-pay-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 44px; /* WCAG touch target */
+    min-height: 44px; /* WCAG touch target */
+    border-radius: 50%;
+    background: rgba(212, 175, 55, 0.15);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: #d4af37;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.add-pay-btn:hover {
+    background: rgba(212, 175, 55, 0.25);
+    transform: scale(1.15);
+}
+
+/* Empty state */
+.pay-info-empty {
+    text-align: center;
+    padding: 1rem 0;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.pay-info-empty p {
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+}
+
+.add-first-pay-btn {
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px dashed rgba(212, 175, 55, 0.3);
+    color: #d4af37;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.add-first-pay-btn:hover {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: #d4af37;
+}
+
+/* Pay items list */
+.upcoming-pays-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.pay-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.pay-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.delete-pay-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 44px; /* WCAG touch target */
+    min-height: 44px; /* WCAG touch target */
+    border-radius: 50%;
+    background: rgba(255, 50, 50, 0.15);
+    border: 1px solid rgba(255, 50, 50, 0.3);
+    color: #ff4d4d;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.delete-pay-btn:hover {
+    background: rgba(255, 50, 50, 0.3);
+    transform: scale(1.1);
+}
+
+.pay-item-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    cursor: pointer;
+}
+
+.pay-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: white;
+}
+
+.pay-frequency {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+}
+
+.pay-next-date {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.1rem;
+}
+
+.next-date-label {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.3);
+    text-transform: uppercase;
+}
+
+.next-date-value {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #22c55e;
+}
+
+/* Countdown section */
+.pay-countdown-section {
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.pay-countdown-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.countdown-days {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #d4af37;
+    min-width: 24px;
+}
+
+.countdown-text strong {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Pay Info Form Modal */
+.pay-info-modal {
+    max-width: 400px !important;
+}
+
+.pay-info-modal h3 {
+    margin-bottom: 1.5rem;
+}
+
+.pay-form-group {
+    margin-bottom: 1rem;
+}
+
+.pay-form-group label {
+    display: block;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.pay-form-group input,
+.pay-form-group select {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.75rem 1rem;
+    color: white;
+    font-size: 0.95rem;
+    border-radius: 6px;
+}
+
+.pay-form-group input:focus,
+.pay-form-group select:focus {
+    border-color: #d4af37;
+    outline: none;
+}
+
+.pay-form-group select {
+    cursor: pointer;
+}
+
+.pay-form-group select option {
+    background: #1a1a1a;
+    color: white;
+}

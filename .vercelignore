@@ -1,0 +1,9 @@
+# Ignore local build artifacts and large binaries
+node_modules
+release
+build-output
+out
+*.log
+*.zip
+*.exe
+# DO NOT exclude dist/ - it's needed for web deployment

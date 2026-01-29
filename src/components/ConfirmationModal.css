@@ -1,0 +1,30 @@
+.confirmation-modal {
+    max-width: 400px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.confirmation-message {
+    color: rgba(255, 255, 255, 0.8);
+    margin: 1rem 0 2rem 0;
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+
+.text-danger {
+    color: #ff6b6b !important;
+}
+
+.btn-danger {
+    background: rgba(220, 38, 38, 0.8);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-danger:hover {
+    background: rgba(220, 38, 38, 1);
+}

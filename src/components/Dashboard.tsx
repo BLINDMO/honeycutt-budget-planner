@@ -1,45 +1,40 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CalculationEngine } from '../core/CalculationEngine';
+import { DateUtils } from '../core/DateUtils';
 import { AddBillModal } from './AddBillModal';
 import { HistoryModal } from './HistoryModal';
+import { NewMonthModal } from './NewMonthModal';
+import { AmountInputModal } from './AmountInputModal';
+import { SettingsModal } from './SettingsModal';
+import { PayInfoHeader, PayInfo } from './PayInfoHeader';
+import type { Bill, HistoryItem } from '../types';
 import './Dashboard.css';
-
-interface Bill {
-    id: string;
-    name: string;
-    amount: number;
-    dueDate: string;
-    isPaid: boolean;
-    hasBalance: boolean;
-    balance?: number;
-    monthlyPayment?: number;
-    interestRate?: number;
-    note?: string;
-    isRecurring: boolean;
-    paidAmount?: number;
-    paidMethod?: string;
-    paidDate?: string;
-}
 
 interface DashboardProps {
     initialBills: Bill[];
-    initialHistory: any[];
-    onDataChange: (bills: Bill[], history?: any[]) => void;
+    initialHistory: HistoryItem[];
+    initialPayInfos?: PayInfo[];
+    onDataChange: (bills: Bill[], history?: HistoryItem[]) => void;
+    onPayInfosChange?: (payInfos: PayInfo[]) => void;
     onReset: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHistory, onDataChange, onReset }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHistory, initialPayInfos, onDataChange, onPayInfosChange, onReset }) => {
     const [bills, setBills] = useState<Bill[]>(initialBills);
-    const [history, setHistory] = useState<any[]>(initialHistory);
+    const [history, setHistory] = useState<HistoryItem[]>(initialHistory);
+    const [payInfos, setPayInfos] = useState<PayInfo[]>(initialPayInfos || []);
 
     // UI State
     const [showNoteFor, setShowNoteFor] = useState<string | null>(null);
     const [showPayoffFor, setShowPayoffFor] = useState<string | null>(null);
     const [showPaymentModal, setShowPaymentModal] = useState<string | null>(null);
     const [showResetModal, setShowResetModal] = useState(false);
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
+    const [showNewMonthModal, setShowNewMonthModal] = useState(false);
     const [showAddBillModal, setShowAddBillModal] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
+    const [showAmountInputFor, setShowAmountInputFor] = useState<string | null>(null);
     const [isEditMode, setIsEditMode] = useState(false);
 
     const [paymentMethods, setPaymentMethods] = useState<string[]>(() => {
@@ -51,69 +46,97 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
     useEffect(() => {
         setBills(initialBills);
         if (initialHistory) setHistory(initialHistory);
-    }, [initialBills, initialHistory]);
+        if (initialPayInfos) setPayInfos(initialPayInfos);
+    }, [initialBills, initialHistory, initialPayInfos]);
+
+    // Handle pay info changes
+    const handlePayInfosChange = (newPayInfos: PayInfo[]) => {
+        setPayInfos(newPayInfos);
+        if (onPayInfosChange) {
+            onPayInfosChange(newPayInfos);
+        }
+    };
+
+    // Handle payment methods changes
+    const handlePaymentMethodsChange = (methods: string[]) => {
+        setPaymentMethods(methods);
+        localStorage.setItem('payment_methods', JSON.stringify(methods));
+    };
 
     // --- LOGIC ---
 
-    const handleNewMonth = () => {
-        if (window.confirm("Start a new month? This will archive paid bills and roll over balances.")) {
-            // 1. Archive Paid Bills
-            const paidBillsToArchive = bills.filter(b => b.isPaid).map(b => ({
-                ...b,
-                archivedDate: new Date().toISOString(),
-                originalDueDate: b.dueDate
-            }));
+    const confirmNewMonth = (unpaidDecisions: Array<{ billId: string; action: 'pay-now' | 'defer' | 'skip' }>) => {
+        // Create a decision map for quick lookup
+        const decisionMap = new Map(unpaidDecisions.map(d => [d.billId, d.action]));
 
-            const newHistory = [...paidBillsToArchive, ...history];
-            setHistory(newHistory);
+        // 1. Archive Paid Bills
+        const paidBillsToArchive = bills.filter(b => b.isPaid).map(b => ({
+            ...b,
+            archivedDate: new Date().toISOString(),
+            originalDueDate: b.dueDate
+        }));
 
-            // 2. Roll over logic
-            // 2. Roll over logic
-            const updatedBills = bills.reduce<Bill[]>((acc, bill) => {
-                let newBalance = bill.balance;
-                let newAmount = bill.amount;
+        const newHistory = [...paidBillsToArchive, ...history];
+        setHistory(newHistory);
 
-                // Precise balance update: New Balance = Old Balance - (Payment - Interest)
-                if (bill.hasBalance && bill.balance) {
-                    const paidAmt = bill.isPaid ? (bill.paidAmount || bill.amount) : 0;
+        // 2. Roll over logic with unpaid bill decisions
+        const updatedBills = bills.reduce<Bill[]>((acc, bill) => {
+            // Check if this bill was unpaid and has a decision
+            const decision = !bill.isPaid ? decisionMap.get(bill.id) : undefined;
 
-                    // FIXED LOGIC: If paid amount covers the entire balance, balance becomes 0 (no interest).
-                    if (paidAmt >= bill.balance) {
-                        newBalance = 0;
-                    } else {
-                        const interest = (bill.balance * ((bill.interestRate || 0) / 100)) / 12;
-                        const principalPaid = Math.max(0, paidAmt - interest);
-                        newBalance = Math.max(0, bill.balance - principalPaid);
-                    }
-                }
-
-                // Reset variable bills (no balance) to 0 so user is prompted to enter new amount
-                if (!bill.hasBalance) {
-                    newAmount = 0;
-                }
-
-                // REMOVE LOGIC: If it's a "has balance" bill and balance is now 0, remove it.
-                if (bill.hasBalance && (newBalance === undefined || newBalance <= 0)) {
-                    return acc;
-                }
-
-                acc.push({
-                    ...bill,
-                    isPaid: false,
-                    paidAmount: 0,
-                    paidMethod: undefined,
-                    paidDate: undefined,
-                    balance: newBalance,
-                    amount: newAmount,
-                    // Move due date 1 month forward
-                    dueDate: new Date(new Date(bill.dueDate).setMonth(new Date(bill.dueDate).getMonth() + 1)).toISOString()
-                });
+            // If user chose to defer this unpaid bill, don't include it
+            if (decision === 'defer') {
                 return acc;
-            }, []);
+            }
 
-            setBills(updatedBills);
-            onDataChange(updatedBills, newHistory);
-        }
+            let newBalance = bill.balance;
+            let newAmount = bill.amount;
+
+            // Precise balance update: New Balance = Old Balance - (Payment - Interest)
+            if (bill.hasBalance && bill.balance) {
+                const paidAmt = bill.isPaid ? (bill.paidAmount || bill.amount) : 0;
+
+                // FIXED LOGIC: If paid amount covers the entire balance, balance becomes 0 (no interest).
+                if (paidAmt >= bill.balance) {
+                    newBalance = 0;
+                } else {
+                    const interest = (bill.balance * ((bill.interestRate || 0) / 100)) / 12;
+                    const principalPaid = Math.max(0, paidAmt - interest);
+                    newBalance = Math.max(0, bill.balance - principalPaid);
+                }
+            }
+
+            // Reset variable bills (no balance) to 0 so user is prompted to enter new amount
+            if (!bill.hasBalance) {
+                newAmount = 0;
+            }
+
+            // REMOVE LOGIC: If it's a "has balance" bill and balance is now 0, remove it.
+            if (bill.hasBalance && (newBalance === undefined || newBalance <= 0)) {
+                return acc;
+            }
+
+            acc.push({
+                ...bill,
+                isPaid: false,
+                paidAmount: 0,
+                paidMethod: undefined,
+                paidDate: undefined,
+                balance: newBalance,
+                amount: newAmount,
+                // Move due date 1 month forward (safely handles month overflow)
+                dueDate: DateUtils.addMonths(bill.dueDate, 1)
+            });
+            return acc;
+        }, []);
+
+        setBills(updatedBills);
+        onDataChange(updatedBills, newHistory);
+        setShowNewMonthModal(false);
+    };
+
+    const handleNewMonth = () => {
+        setShowNewMonthModal(true);
     };
 
     const updateBillAmount = (id: string, newAmount: number) => {
@@ -148,7 +171,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
             bill.id === billId ? { ...bill, isPaid: !bill.isPaid } : bill
         );
         setBills(updatedBills);
-        onDataChange(updatedBills);
+        onDataChange(updatedBills, history);
     };
 
     const updateNote = (billId: string, note: string) => {
@@ -156,7 +179,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
             bill.id === billId ? { ...bill, note } : bill
         );
         setBills(updatedBills);
-        onDataChange(updatedBills);
+        onDataChange(updatedBills, history);
         setShowNoteFor(null);
     };
 
@@ -196,11 +219,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
 
     return (
         <div className="dashboard">
+            {/* Pay Info Header */}
+            <PayInfoHeader
+                payInfos={payInfos}
+                onPayInfosChange={handlePayInfosChange}
+                isEditMode={isEditMode}
+            />
+
             <div className="dashboard-content">
                 {/* Center Pane: Bills */}
                 <div className="pane bills-pane glass-pane">
                     <div className="pane-header">
-                        <h2>Bills</h2>
+                        <div className="pane-title-group">
+                            <h2>{new Date().toLocaleDateString('en-US', { month: 'long' })} Bills</h2>
+                            <button
+                                className="add-bill-mini-btn"
+                                onClick={addNewBill}
+                                title="Add New Bill"
+                            >
+                                Add Bill
+                            </button>
+                        </div>
                         <div className="header-controls">
                             <button className="new-month-btn" onClick={handleNewMonth}>
                                 New Month
@@ -241,6 +280,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                                             className="add-note-btn"
                                             onClick={() => setShowNoteFor(bill.id === showNoteFor ? null : bill.id)}
                                             title={bill.note ? "Edit note" : "Add note"}
+                                            aria-label={bill.note ? `Edit note for ${bill.name}` : `Add note to ${bill.name}`}
                                         >
                                             {bill.note ? '📝' : '+'}
                                         </button>
@@ -301,20 +341,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                                             type="number"
                                             className="edit-amount-input"
                                             value={bill.amount}
-                                            onChange={(e) => updateBillAmount(bill.id, parseFloat(e.target.value) || 0)}
+                                            onChange={(e) => updateBillAmount(bill.id, CalculationEngine.parseAmount(e.target.value))}
                                             onClick={(e) => e.stopPropagation()}
                                             step="0.01"
+                                            min="0"
                                         />
                                     ) : (
                                         bill.amount === 0 && !bill.hasBalance ? (
                                             <button
                                                 className="enter-amount-btn"
-                                                onClick={() => {
-                                                    const amt = prompt(`Enter the amount due this month for ${bill.name}`);
-                                                    if (amt && !isNaN(parseFloat(amt))) {
-                                                        updateBillAmount(bill.id, parseFloat(amt));
-                                                    }
-                                                }}
+                                                onClick={() => setShowAmountInputFor(bill.id)}
                                             >
                                                 Enter Bill Amount
                                             </button>
@@ -335,6 +371,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                                                 className="payoff-info-btn"
                                                 onClick={() => setShowPayoffFor(bill.id)}
                                                 title="View payoff details"
+                                                aria-label={`View payoff details for ${bill.name}`}
                                             >
                                                 ℹ
                                             </button>
@@ -359,9 +396,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                                 <p>All bills paid! 🎉</p>
                             </div>
                         )}
-                        <button className="add-new-bill-row-btn" onClick={addNewBill}>
-                            + Add New Bill
-                        </button>
                     </div>
                 </div>
 
@@ -419,14 +453,44 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                         </div>
 
                         <button
-                            className="reset-app-btn"
-                            onClick={() => setShowResetModal(true)}
+                            className="settings-btn"
+                            onClick={() => setShowSettingsModal(true)}
+                            aria-label="Open Settings"
                         >
-                            reset app
+                            ⚙️ Settings
                         </button>
                     </div>
                 </div>
             </div>
+
+            {/* New Month Modal */}
+            <AnimatePresence>
+                {showNewMonthModal && (
+                    <NewMonthModal
+                        isOpen={showNewMonthModal}
+                        unpaidBills={unpaidBills}
+                        onConfirm={confirmNewMonth}
+                        onCancel={() => setShowNewMonthModal(false)}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Amount Input Modal */}
+            <AnimatePresence>
+                {showAmountInputFor && (
+                    <AmountInputModal
+                        isOpen={!!showAmountInputFor}
+                        billName={bills.find(b => b.id === showAmountInputFor)?.name || ''}
+                        onSave={(amount) => {
+                            if (showAmountInputFor) {
+                                updateBillAmount(showAmountInputFor, amount);
+                                setShowAmountInputFor(null);
+                            }
+                        }}
+                        onCancel={() => setShowAmountInputFor(null)}
+                    />
+                )}
+            </AnimatePresence>
 
             {/* Note Modal */}
             <AnimatePresence>
@@ -492,6 +556,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                     />
                 )}
             </AnimatePresence>
+
+            {/* Settings Modal */}
+            <AnimatePresence>
+                {showSettingsModal && (
+                    <SettingsModal
+                        isOpen={showSettingsModal}
+                        onClose={() => setShowSettingsModal(false)}
+                        paymentMethods={paymentMethods}
+                        onPaymentMethodsChange={handlePaymentMethodsChange}
+                        payInfos={payInfos}
+                        onPayInfosChange={handlePayInfosChange}
+                        onResetApp={onReset}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };
@@ -506,6 +585,13 @@ interface ResetModalProps {
 
 const ResetModal: React.FC<ResetModalProps> = ({ onConfirm, onClose }) => {
     const [inputValue, setInputValue] = useState('');
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        setTimeout(() => {
+            inputRef.current?.focus();
+        }, 50);
+    }, []);
 
     const handleConfirm = () => {
         if (inputValue.toLowerCase() === 'reset') {
@@ -537,6 +623,7 @@ const ResetModal: React.FC<ResetModalProps> = ({ onConfirm, onClose }) => {
                 <div className="reset-input-group">
                     <label>Type "reset" to confirm:</label>
                     <input
+                        ref={inputRef}
                         type="text"
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
@@ -573,6 +660,13 @@ interface NoteModalProps {
 
 const NoteModal: React.FC<NoteModalProps> = ({ billName, currentNote, onSave, onClose }) => {
     const [note, setNote] = useState(currentNote);
+    const textAreaRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        setTimeout(() => {
+            textAreaRef.current?.focus();
+        }, 50);
+    }, []);
 
     return (
         <motion.div
@@ -591,6 +685,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ billName, currentNote, onSave, on
             >
                 <h3>Add Note for {billName}</h3>
                 <textarea
+                    ref={textAreaRef}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="Enter your note here..."
@@ -755,6 +850,27 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ bill, paymentMethods, onAdd
     const [amountToPay, setAmountToPay] = useState(bill.amount);
     const [isEditingAmount, setIsEditingAmount] = useState(false);
 
+    const amountInputRef = useRef<HTMLInputElement>(null);
+    const methodInputRef = useRef<HTMLInputElement>(null);
+
+    // Focus amount input when editing starts
+    useEffect(() => {
+        if (isEditingAmount) {
+            setTimeout(() => {
+                amountInputRef.current?.focus();
+            }, 50);
+        }
+    }, [isEditingAmount]);
+
+    // Focus method input when add form shows
+    useEffect(() => {
+        if (showAddMethod) {
+            setTimeout(() => {
+                methodInputRef.current?.focus();
+            }, 50);
+        }
+    }, [showAddMethod]);
+
     const handleAddMethod = () => {
         if (newMethod.trim()) {
             onAddMethod(newMethod.trim());
@@ -808,6 +924,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ bill, paymentMethods, onAdd
                     <div className="payment-amount-container">
                         {isEditingAmount ? (
                             <input
+                                ref={amountInputRef}
                                 type="number"
                                 className="payment-amount-input"
                                 value={amountToPay}
@@ -866,6 +983,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ bill, paymentMethods, onAdd
                             exit={{ height: 0, opacity: 0 }}
                         >
                             <input
+                                ref={methodInputRef}
                                 type="text"
                                 value={newMethod}
                                 onChange={(e) => setNewMethod(e.target.value)}

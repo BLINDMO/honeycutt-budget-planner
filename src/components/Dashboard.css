@@ -53,25 +53,45 @@
     text-align: center;
 }
 
-/* BILL ITEM GRID */
+/* Premium BILL ITEM GRID - Luxe micro-interactions */
 .bill-item {
     display: grid !important;
     grid-template-columns: 50px 80px 1fr 140px 160px 70px !important;
-    gap: 1rem;
-    padding: 1rem;
-    margin-bottom: 0.6rem;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 12px;
+    gap: 0.75rem;
+    padding: 0.625rem 1rem;
+    margin-bottom: 0.375rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border-radius: 10px;
     align-items: center;
-    transition: all 0.2s ease-in-out;
-    border: 1px solid transparent;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    min-height: 44px;
+    position: relative;
+}
+
+.bill-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, transparent, rgba(212, 175, 55, 0.5), transparent);
+    border-radius: 10px 0 0 10px;
+    opacity: 0;
+    transition: opacity 0.25s;
 }
 
 .bill-item:hover {
-    background: rgba(255, 255, 255, 0.07);
-    transform: translateY(-1px);
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.05) 100%);
+    transform: translateX(4px) translateY(-1px);
+    border-color: rgba(212, 175, 55, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3),
+                0 0 20px rgba(212, 175, 55, 0.1);
+}
+
+.bill-item:hover::before {
+    opacity: 1;
 }
 
 /* Column 1: Note button */
@@ -83,8 +103,10 @@
 }
 
 .add-note-btn {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
+    min-width: 44px; /* WCAG touch target */
+    min-height: 44px; /* WCAG touch target */
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
     border: none;
@@ -94,12 +116,13 @@
     align-items: center;
     justify-content: center;
     font-size: 14px;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
 }
 
 .add-note-btn:hover {
     background: rgba(255, 255, 255, 0.2);
     color: rgba(255, 255, 255, 0.9);
+    transform: scale(1.1);
 }
 
 /* Column 2: Date */
@@ -121,13 +144,14 @@
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     color: white;
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     font-weight: 500;
     overflow: hidden;
     text-overflow: ellipsis;
     padding-left: 0.5rem;
+    white-space: nowrap;
 }
 
 .inline-note-input {
@@ -148,14 +172,22 @@
 }
 
 .save-note-mini-btn {
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
+    min-width: 44px; /* WCAG touch target */
+    min-height: 44px; /* WCAG touch target */
     background: rgba(76, 175, 80, 0.3);
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     color: #4CAF50;
     cursor: pointer;
     font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.save-note-mini-btn:hover {
+    background: rgba(76, 175, 80, 0.4);
+    transform: scale(1.05);
 }
 
 /* Column 4: Amount */
@@ -164,7 +196,7 @@
     text-align: right;
     color: #FFD700;
     font-weight: 700;
-    font-size: 1.15rem;
+    font-size: 1rem;
     letter-spacing: 0.02em;
 }
 
@@ -184,8 +216,10 @@
 }
 
 .payoff-info-btn {
-    width: 20px;
-    height: 20px;
+    width: 28px;
+    height: 28px;
+    min-width: 44px; /* WCAG touch target */
+    min-height: 44px; /* WCAG touch target */
     border-radius: 50%;
     background: rgba(33, 150, 243, 0.2);
     border: none;
@@ -195,10 +229,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    transition: all 0.2s ease;
 }
 
 .payoff-info-btn:hover {
     background: rgba(33, 150, 243, 0.4);
+    transform: scale(1.1);
 }
 
 /* Column 6: Paid */
@@ -210,9 +247,11 @@
 }
 
 .mark-paid-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    min-width: 44px; /* WCAG touch target */
+    min-height: 44px; /* WCAG touch target */
+    border-radius: 8px;
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid rgba(255, 255, 255, 0.3);
     color: transparent;
@@ -220,19 +259,62 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
-    transition: all 0.2s;
+    font-size: 20px;
+    transition: all 0.2s ease;
 }
 
 .mark-paid-btn:hover {
     background: rgba(76, 175, 80, 0.2);
     border-color: #4CAF50;
+    transform: scale(1.05);
 }
 
 .mark-paid-btn:not(:empty) {
     color: #4CAF50;
     background: rgba(76, 175, 80, 0.2);
     border-color: #4CAF50;
+}
+
+/* Bills Pane - Main container for bills section */
+.bills-pane {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+    /* CRITICAL: Allows flex item to shrink below content size */
+}
+
+/* Bills List - Scrollable container */
+.bills-list {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 0.5rem;
+    /* Space for scrollbar */
+}
+
+/* Custom scrollbar for bills list and paid list */
+.bills-list::-webkit-scrollbar,
+.paid-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.bills-list::-webkit-scrollbar-track,
+.paid-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+}
+
+.bills-list::-webkit-scrollbar-thumb,
+.paid-list::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.6);
+    border-radius: 4px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.bills-list::-webkit-scrollbar-thumb:hover,
+.paid-list::-webkit-scrollbar-thumb:hover {
+    background: #d4af37;
 }
 
 /* General Layout - Keep what's needed from original */
@@ -256,14 +338,31 @@
 }
 
 .pane {
-    padding: 1rem;
+    padding: 1.25rem;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: rgba(10, 10, 10, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 0.75rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    background: linear-gradient(135deg, rgba(15, 15, 15, 0.96) 0%, rgba(10, 10, 10, 0.94) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5),
+                0 16px 64px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pane::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+    border-radius: 1rem 1rem 0 0;
 }
 
 .pane-header {
@@ -280,6 +379,36 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     letter-spacing: 0.05em;
     text-transform: uppercase;
+}
+
+.pane-title-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.add-bill-mini-btn {
+    background: rgba(212, 175, 55, 0.15);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: #d4af37;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+.add-bill-mini-btn:hover {
+    background: rgba(212, 175, 55, 0.25);
+    border-color: #d4af37;
+    color: #fff;
+    transform: translateY(-1px);
 }
 
 /* Notes Pane */
@@ -308,10 +437,27 @@
     flex-direction: column;
     gap: 1rem;
     height: 100%;
+    overflow: hidden;
+    /* Prevent column itself from scrolling */
 }
 
 .paid-pane {
     flex: 3;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+    /* CRITICAL: Allows flex item to shrink below content size */
+}
+
+.paid-list {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
 .stats-pane {
@@ -395,7 +541,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 2200;
 }
 
 .modal-content {
@@ -891,21 +1037,31 @@
     /* Make room for the button */
 }
 
-.reset-app-btn {
-    background: transparent;
-    border: none;
-    color: rgba(255, 255, 255, 0.2);
-    font-size: 0.8rem;
+.settings-btn {
+    margin-top: 1.5rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: #d4af37;
+    border-radius: 0.625rem;
+    font-weight: 600;
+    font-size: 0.875rem;
     cursor: pointer;
-    position: absolute;
-    bottom: 1rem;
-    right: 1.5rem;
-    transition: all 0.2s;
-    text-transform: lowercase;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
-.reset-app-btn:hover {
-    color: rgba(255, 50, 50, 0.6);
+.settings-btn:hover {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(212, 175, 55, 0.1));
+    border-color: #d4af37;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(212, 175, 55, 0.2);
 }
 
 .reset-modal-content {
@@ -1127,4 +1283,291 @@
     border-color: #d4af37;
     color: #d4af37;
     background: rgba(212, 175, 55, 0.1);
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN - CRITICAL FOR CROSS-DEVICE COMPATIBILITY
+   ============================================================================ */
+
+/* Tablets and smaller laptops (1024px and below) */
+@media (max-width: 1024px) {
+    .dashboard-content {
+        grid-template-columns: 1fr 250px;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .bill-list-header {
+        grid-template-columns: 40px 70px 1fr 120px 140px 60px !important;
+        gap: 0.75rem;
+        font-size: 0.7rem;
+    }
+
+    .bill-item {
+        grid-template-columns: 40px 70px 1fr 120px 140px 60px !important;
+        gap: 0.75rem;
+        padding: 0.75rem;
+    }
+
+    .bill-amount {
+        font-size: 1rem;
+    }
+
+    .payoff-modal {
+        width: 700px !important;
+    }
+}
+
+/* Small tablets and large phones (768px and below) */
+@media (max-width: 768px) {
+    .dashboard-content {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 0.75rem;
+    }
+
+    .right-column {
+        display: none;
+    }
+
+    .bill-list-header {
+        grid-template-columns: 30px 60px 1fr 100px 50px !important;
+        gap: 0.5rem;
+        padding: 0 0.5rem;
+        font-size: 0.75rem; /* Minimum 12px for readability */
+    }
+
+    .header-balance {
+        display: none;
+    }
+
+    .bill-item {
+        grid-template-columns: 30px 60px 1fr 100px 50px !important;
+        gap: 0.5rem;
+        padding: 0.5rem;
+    }
+
+    .bill-balance-col {
+        display: none;
+    }
+
+    .bill-amount {
+        font-size: 0.95rem;
+        width: 100px;
+    }
+
+    .add-bill-modal-content {
+        max-width: 95vw;
+        padding: 1.5rem;
+        max-height: 85vh;
+    }
+
+    .bill-form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .payoff-modal {
+        width: 95vw !important;
+    }
+
+    .payoff-scenarios-container {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-modal-content {
+        width: 95vw !important;
+    }
+}
+
+/* Tablets in portrait (600px and below) - Premium tablet experience */
+@media (max-width: 600px) {
+    .dashboard-content {
+        padding: 0.65rem;
+    }
+
+    .pane {
+        padding: 0.85rem;
+    }
+
+    .pane-header {
+        font-size: 0.85rem;
+    }
+
+    .bill-list-header {
+        font-size: 0.75rem; /* Maintain 12px minimum */
+        padding: 0 0.4rem;
+    }
+
+    .bill-item {
+        padding: 0.6rem 0.4rem;
+        gap: 0.4rem;
+    }
+
+    /* Optimize modals for tablet portrait */
+    .add-bill-modal-content {
+        max-width: 90vw;
+        padding: 1.75rem;
+    }
+
+    .payoff-modal {
+        width: 90vw !important;
+    }
+
+    .payment-modal-content {
+        width: 90vw !important;
+    }
+
+    /* Button sizing for tablet touch */
+    .btn-primary, .btn-secondary {
+        padding: 0.65rem 1.25rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Mobile phones (480px and below) */
+@media (max-width: 480px) {
+    .dashboard-content {
+        padding: 0.5rem;
+    }
+
+    .pane {
+        padding: 0.75rem;
+    }
+
+    .pane-header {
+        font-size: 0.8rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .header-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .bill-list-header {
+        grid-template-columns: 25px 50px 1fr 80px 45px !important;
+        gap: 0.25rem;
+        padding: 0 0.25rem;
+        font-size: 0.75rem; /* Minimum 12px for readability */
+    }
+
+    .bill-item {
+        grid-template-columns: 25px 50px 1fr 80px 45px !important;
+        gap: 0.25rem;
+        padding: 0.5rem 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .add-note-btn {
+        width: 44px; /* WCAG touch target on mobile */
+        height: 44px; /* WCAG touch target on mobile */
+        font-size: 14px;
+    }
+
+    .bill-date {
+        font-size: 0.8rem;
+        width: 50px;
+    }
+
+    .bill-name {
+        font-size: 0.9rem;
+    }
+
+    .bill-amount {
+        font-size: 0.85rem;
+        width: 80px;
+    }
+
+    .mark-paid-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 16px;
+    }
+
+    .add-bill-modal-content {
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+
+    .add-bill-header h2 {
+        font-size: 1.25rem;
+    }
+
+    .modal-form-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .btn-cancel,
+    .btn-submit {
+        width: 100%;
+    }
+
+    .new-month-btn,
+    .header-action-btn {
+        font-size: 0.7rem;
+        padding: 0.3rem 0.75rem;
+    }
+
+    .payment-amount-large {
+        font-size: 1.8rem;
+    }
+
+    .payment-amount-input {
+        font-size: 1.8rem;
+        width: 150px;
+    }
+}
+
+/* Very small screens (360px and below) */
+@media (max-width: 360px) {
+    .bill-list-header {
+        grid-template-columns: 20px 45px 1fr 70px 40px !important;
+    }
+
+    .bill-item {
+        grid-template-columns: 20px 45px 1fr 70px 40px !important;
+    }
+
+    .add-note-btn {
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+    }
+
+    .bill-date {
+        font-size: 0.75rem;
+        width: 45px;
+    }
+
+    .bill-name {
+        font-size: 0.85rem;
+    }
+
+    .bill-amount {
+        font-size: 0.8rem;
+        width: 70px;
+    }
+
+    .mark-paid-btn {
+        width: 24px;
+        height: 24px;
+        font-size: 14px;
+    }
+}
+
+/* Ensure modals are always scrollable and fit on screen */
+.modal-overlay {
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.add-bill-modal-content,
+.modal-content,
+.payment-modal-content,
+.payoff-modal {
+    max-height: 90vh;
+    overflow-y: auto;
 }

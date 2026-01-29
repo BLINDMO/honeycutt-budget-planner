@@ -67,6 +67,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
     // STATE
     // ========================================================================
 
+    const formIdPrefix = useMemo(() => `wizard-${Date.now()}-`, []);
     const [step, setStep] = useState<WizardStep>('welcome');
     const [bills, setBills] = useState<Bill[]>([]);
 
@@ -252,7 +253,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
                                     <div className="form-group">
                                         <label htmlFor="billName">Bill Name *</label>
                                         <input
-                                            id="billName"
+                                            id={`${formIdPrefix}billName`}
                                             type="text"
                                             value={billName}
                                             onChange={(e) => setBillName(e.target.value)}
@@ -271,7 +272,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
                                             <div className="input-with-icon">
                                                 <span className="input-icon" aria-hidden="true">$</span>
                                                 <input
-                                                    id="amount"
+                                                    id={`${formIdPrefix}amount`}
                                                     type="number"
                                                     step="0.01"
                                                     min="0"
@@ -289,7 +290,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
                                         <div className="form-group">
                                             <label htmlFor="dueDate">Day Due (Monthly) *</label>
                                             <input
-                                                id="dueDate"
+                                                id={`${formIdPrefix}dueDate`}
                                                 type="number"
                                                 min="1"
                                                 max="31"
