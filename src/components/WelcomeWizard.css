@@ -575,28 +575,9 @@
     transform: scale(0.95);
 }
 
-/* ============================================================================
-   GLASS PANE EFFECT (local override for wizard)
-   ============================================================================ */
-
-.welcome-wizard .glass-pane {
-    position: relative;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-}
-
-.welcome-wizard .glass-pane::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg,
-            transparent,
-            rgba(255, 255, 255, 0.1),
-            transparent);
-    z-index: 1;
+/* Date input click to open calendar */
+.date-input-full-click {
+    cursor: pointer;
 }
 
 /* ============================================================================

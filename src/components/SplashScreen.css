@@ -35,7 +35,7 @@
 /* Main Title */
 .splash-title {
     font-family: 'Outfit', sans-serif;
-    font-size: 4.5rem;
+    font-size: clamp(2rem, 6vw, 4.5rem);
     font-weight: 300;
     text-transform: uppercase;
     color: #ffffff;

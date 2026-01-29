@@ -207,7 +207,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
                 {step === 'welcome' && (
                     <motion.div
                         key="welcome"
-                        className="welcome-step glass-pane"
+                        className="welcome-step"
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0.9, opacity: 0 }}
@@ -238,7 +238,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
                 {step === 'add-bills' && (
                     <motion.div
                         key="add-bills"
-                        className="add-bills-step glass-pane"
+                        className="add-bills-step"
                         initial={{ x: 100, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: -100, opacity: 0 }}
@@ -313,6 +313,8 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
                                             type="date"
                                             value={dueDate}
                                             onChange={(e) => setDueDate(e.target.value)}
+                                            onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+                                            className="date-input-full-click"
                                             required
                                             aria-required="true"
                                             aria-label="Bill due date"
