@@ -51,8 +51,8 @@
     color: white;
     width: 36px;
     height: 36px;
-    min-width: 44px; /* WCAG touch target */
-    min-height: 44px; /* WCAG touch target */
+    min-width: 36px;
+    min-height: 36px;
     border-radius: 50%;
     cursor: pointer;
     display: flex;

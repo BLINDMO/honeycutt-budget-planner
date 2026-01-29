@@ -51,12 +51,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 2rem 2.5rem 1.5rem;
+    padding: 1.25rem 2rem 1rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .settings-header h2 {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     color: #ffffff;
     margin: 0;
     font-weight: 600;
@@ -66,8 +66,6 @@
 .settings-close-btn {
     width: 36px;
     height: 36px;
-    min-width: 44px;
-    min-height: 44px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -91,14 +89,14 @@
 .settings-tabs {
     display: flex;
     gap: 0;
-    padding: 0 2.5rem;
+    padding: 0 2rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(0, 0, 0, 0.3);
 }
 
 .settings-tab {
     flex: 1;
-    padding: 1rem 1.5rem;
+    padding: 0.75rem 1rem;
     background: transparent;
     border: none;
     color: rgba(255, 255, 255, 0.5);
@@ -136,9 +134,10 @@
 
 /* Settings Content Area */
 .settings-content {
-    padding: 2rem 2.5rem;
+    padding: 1.5rem 2rem;
     overflow-y: auto;
     flex: 1;
+    min-height: 0;
 }
 
 .settings-content::-webkit-scrollbar {
@@ -190,39 +189,38 @@
 
 .settings-description {
     color: rgba(255, 255, 255, 0.6);
-    font-size: 0.9rem;
-    margin-bottom: 1.5rem;
-    line-height: 1.6;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
 }
 
 /* Reset Tab Specific */
 .warning-icon {
-    font-size: 3rem;
+    font-size: 2rem;
     text-align: center;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .settings-section h3 {
     text-align: center;
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     color: #ffffff;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .reset-list {
     list-style: none;
-    padding: 0;
-    margin: 1.5rem 0;
+    margin: 1rem 0;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 0.75rem;
-    padding: 1.25rem 1.5rem;
+    padding: 1rem 1.25rem;
 }
 
 .reset-list li {
     color: rgba(255, 255, 255, 0.8);
-    font-size: 0.95rem;
-    margin: 0.75rem 0;
+    font-size: 0.9rem;
+    margin: 0.5rem 0;
     padding-left: 1.5rem;
     position: relative;
 }
@@ -238,9 +236,9 @@
 .settings-warning {
     text-align: center;
     color: #ff6b6b;
-    font-size: 0.95rem;
-    margin: 1.5rem 0;
-    padding: 1rem;
+    font-size: 0.9rem;
+    margin: 1rem 0;
+    padding: 0.75rem;
     background: rgba(255, 107, 107, 0.1);
     border: 1px solid rgba(255, 107, 107, 0.3);
     border-radius: 0.5rem;
@@ -390,8 +388,6 @@
 .delete-btn {
     width: 36px;
     height: 36px;
-    min-width: 44px;
-    min-height: 44px;
     border-radius: 50%;
     border: 1px solid;
     font-size: 1rem;
@@ -424,6 +420,11 @@
     background: rgba(255, 50, 50, 0.2);
     border-color: #ff6b6b;
     transform: scale(1.1);
+}
+
+/* Sub-modals inside settings need higher z-index than settings overlay (2500) */
+.settings-sub-modal .modal-overlay {
+    z-index: 2600;
 }
 
 /* Responsive Design */

@@ -4,6 +4,7 @@ import { SplashScreen } from './components/SplashScreen';
 import { WelcomeWizard } from './components/WelcomeWizard';
 import { Dashboard } from './components/Dashboard';
 import { UpdateNotification } from './components/UpdateNotification';
+import { DateUtils } from './core/DateUtils';
 import './styles/design-system.css';
 
 const STORAGE_KEY = 'honeycutt_budget_data';
@@ -42,6 +43,7 @@ interface BudgetData {
     isFirstTime: boolean;
     theme: 'dark' | 'light';
     payInfos?: PayInfo[];
+    activeMonth?: string;
 }
 
 
@@ -184,6 +186,15 @@ function App() {
         setShowSplash(false);
     }, []);
 
+    const handleActiveMonthChange = useCallback((activeMonth: string) => {
+        if (budgetData) {
+            saveBudgetData({
+                ...budgetData,
+                activeMonth
+            });
+        }
+    }, [budgetData, saveBudgetData]);
+
     const handlePayInfosChange = useCallback((payInfos: PayInfo[]) => {
         if (budgetData) {
             saveBudgetData({
@@ -231,8 +242,10 @@ function App() {
                 initialBills={budgetData?.bills || []}
                 initialHistory={budgetData?.paidHistory || []}
                 initialPayInfos={budgetData?.payInfos || []}
+                initialActiveMonth={budgetData?.activeMonth || DateUtils.getCurrentMonth()}
                 onDataChange={handleBillsChange}
                 onPayInfosChange={handlePayInfosChange}
+                onActiveMonthChange={handleActiveMonthChange}
                 onReset={handleResetApp}
             />
 

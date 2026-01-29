@@ -15,15 +15,21 @@ interface DashboardProps {
     initialBills: Bill[];
     initialHistory: HistoryItem[];
     initialPayInfos?: PayInfo[];
+    initialActiveMonth?: string;
     onDataChange: (bills: Bill[], history?: HistoryItem[]) => void;
     onPayInfosChange?: (payInfos: PayInfo[]) => void;
+    onActiveMonthChange?: (month: string) => void;
     onReset: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHistory, initialPayInfos, onDataChange, onPayInfosChange, onReset }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHistory, initialPayInfos, initialActiveMonth, onDataChange, onPayInfosChange, onActiveMonthChange, onReset }) => {
     const [bills, setBills] = useState<Bill[]>(initialBills);
     const [history, setHistory] = useState<HistoryItem[]>(initialHistory);
     const [payInfos, setPayInfos] = useState<PayInfo[]>(initialPayInfos || []);
+
+    // Month navigation state
+    const [activeMonth, setActiveMonth] = useState<string>(initialActiveMonth || DateUtils.getCurrentMonth());
+    const [viewingMonth, setViewingMonth] = useState<string>(initialActiveMonth || DateUtils.getCurrentMonth());
 
     // UI State
     const [showNoteFor, setShowNoteFor] = useState<string | null>(null);
@@ -81,6 +87,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
 
         // 2. Roll over logic with unpaid bill decisions
         const updatedBills = bills.reduce<Bill[]>((acc, bill) => {
+            // Skip one-time bills - they don't roll over to next month
+            if (bill.frequency === 'one-time') {
+                return acc;
+            }
+
             // Check if this bill was unpaid and has a decision
             const decision = !bill.isPaid ? decisionMap.get(bill.id) : undefined;
 
@@ -133,10 +144,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
         setBills(updatedBills);
         onDataChange(updatedBills, newHistory);
         setShowNewMonthModal(false);
-    };
 
-    const handleNewMonth = () => {
-        setShowNewMonthModal(true);
+        // Advance active month and viewing month
+        const newActiveMonth = DateUtils.addMonthsToMonth(activeMonth, 1);
+        setActiveMonth(newActiveMonth);
+        setViewingMonth(newActiveMonth);
+        if (onActiveMonthChange) onActiveMonthChange(newActiveMonth);
     };
 
     const updateBillAmount = (id: string, newAmount: number) => {
@@ -206,16 +219,87 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
 
     // --- COMPUTED ---
 
-    const unpaidBills = useMemo(() =>
-        bills.filter(b => !b.isPaid).sort((a, b) =>
-            new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
-        ), [bills]
+    const isPreviewMode = useMemo(() =>
+        DateUtils.compareMonths(viewingMonth, activeMonth) > 0,
+        [viewingMonth, activeMonth]
     );
 
-    const paidBills = useMemo(() => bills.filter(b => b.isPaid), [bills]);
-    const totalDue = useMemo(() => CalculationEngine.calculateTotalDue(bills), [bills]);
-    const dueIn2Weeks = useMemo(() => CalculationEngine.calculateDueWithinDays(bills, 14), [bills]);
+    // Helper: get bills for a given month, projecting recurring bills forward
+    const getBillsForMonth = (targetMonth: string) => {
+        return bills
+            .filter(b => {
+                const bMonth = DateUtils.getMonthFromDate(b.dueDate);
+                if (bMonth === targetMonth) return true;
+                // Recurring bills from prior months appear in future months
+                if (b.isRecurring && DateUtils.compareMonths(bMonth, targetMonth) < 0) return true;
+                return false;
+            })
+            .map(b => {
+                const bMonth = DateUtils.getMonthFromDate(b.dueDate);
+                if (b.isRecurring && bMonth !== targetMonth) {
+                    const [vy, vm] = targetMonth.split('-').map(Number);
+                    const day = DateUtils.parseLocalDate(b.dueDate).getDate();
+                    const daysInMonth = new Date(vy, vm, 0).getDate();
+                    const projectedDay = Math.min(day, daysInMonth);
+                    const projectedDate = `${targetMonth}-${String(projectedDay).padStart(2, '0')}`;
+                    return { ...b, dueDate: projectedDate };
+                }
+                return b;
+            })
+            .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+    };
+
+    // Filter bills to viewing month (recurring bills appear in future months too)
+    const monthBills = useMemo(() => getBillsForMonth(viewingMonth), [bills, viewingMonth]);
+
+    const unpaidBills = useMemo(() => monthBills.filter(b => !b.isPaid), [monthBills]);
+    const paidBills = useMemo(() => monthBills.filter(b => b.isPaid), [monthBills]);
+    const totalDue = useMemo(() => CalculationEngine.calculateTotalDue(monthBills), [monthBills]);
+    const dueIn2Weeks = useMemo(() => CalculationEngine.calculateDueWithinDays(monthBills, 14), [monthBills]);
     const unpaidCount = useMemo(() => unpaidBills.length, [unpaidBills]);
+
+    // Check if active month is complete (all bills paid)
+    const activeMonthBills = useMemo(() => getBillsForMonth(activeMonth), [bills, activeMonth]);
+    const activeMonthComplete = useMemo(() =>
+        activeMonthBills.length > 0 && activeMonthBills.every(b => b.isPaid),
+        [activeMonthBills]
+    );
+
+    // Month navigation handlers
+    const handlePreviousMonth = () => {
+        setViewingMonth(DateUtils.addMonthsToMonth(viewingMonth, -1));
+    };
+
+    const handleNextMonth = () => {
+        const nextMonth = DateUtils.addMonthsToMonth(viewingMonth, 1);
+        // If we're on the active month and trying to go forward
+        if (DateUtils.compareMonths(viewingMonth, activeMonth) === 0) {
+            if (activeMonthComplete) {
+                // All bills paid - trigger month transition
+                setShowNewMonthModal(true);
+            } else {
+                // Not all bills paid - just navigate to preview
+                setViewingMonth(nextMonth);
+            }
+        } else {
+            setViewingMonth(nextMonth);
+        }
+    };
+
+    // Boundaries
+    const canGoBack = useMemo(() => {
+        const minMonth = DateUtils.addMonthsToMonth(activeMonth, -12);
+        return DateUtils.compareMonths(viewingMonth, minMonth) > 0;
+    }, [viewingMonth, activeMonth]);
+
+    const canGoForward = useMemo(() => {
+        const maxMonth = DateUtils.addMonthsToMonth(activeMonth, 12);
+        return DateUtils.compareMonths(viewingMonth, maxMonth) < 0;
+    }, [viewingMonth, activeMonth]);
+
+    const handlePreviewPayAttempt = () => {
+        alert(`Please complete ${DateUtils.getMonthDisplay(activeMonth)}'s bills before paying bills in future months.`);
+    };
 
     return (
         <div className="dashboard">
@@ -231,7 +315,38 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                 <div className="pane bills-pane glass-pane">
                     <div className="pane-header">
                         <div className="pane-title-group">
-                            <h2>{new Date().toLocaleDateString('en-US', { month: 'long' })} Bills</h2>
+                            <div className="month-navigation">
+                                <button
+                                    className="month-nav-arrow"
+                                    onClick={handlePreviousMonth}
+                                    disabled={!canGoBack}
+                                    aria-label="Previous month"
+                                >
+                                    ←
+                                </button>
+                                <div className="month-title-container">
+                                    <h2>{DateUtils.getMonthDisplay(viewingMonth)} Bills</h2>
+                                    {isPreviewMode && <span className="preview-badge">PREVIEW</span>}
+                                </div>
+                                <button
+                                    className="month-nav-arrow"
+                                    onClick={handleNextMonth}
+                                    disabled={!canGoForward}
+                                    aria-label="Next month"
+                                >
+                                    →
+                                </button>
+                            </div>
+                            <div className="current-date-display">{DateUtils.getCurrentDateDisplay()}</div>
+                        </div>
+                        <div className="header-controls">
+                            <button
+                                className="header-action-btn settings-header-btn"
+                                onClick={() => setShowSettingsModal(true)}
+                                title="Settings"
+                            >
+                                ⚙️
+                            </button>
                             <button
                                 className="add-bill-mini-btn"
                                 onClick={addNewBill}
@@ -239,16 +354,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                             >
                                 Add Bill
                             </button>
-                        </div>
-                        <div className="header-controls">
-                            <button className="new-month-btn" onClick={handleNewMonth}>
-                                New Month
-                            </button>
                             <button
                                 className={`header-action-btn edit-mode-btn ${isEditMode ? 'active' : ''}`}
                                 onClick={() => setIsEditMode(!isEditMode)}
                             >
-                                {isEditMode ? 'Done' : 'Edit'}
+                                {isEditMode ? 'Done' : 'Delete a Bill'}
                             </button>
                         </div>
                     </div>
@@ -282,14 +392,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                                             title={bill.note ? "Edit note" : "Add note"}
                                             aria-label={bill.note ? `Edit note for ${bill.name}` : `Add note to ${bill.name}`}
                                         >
-                                            {bill.note ? '📝' : '+'}
+                                            📓
                                         </button>
                                     )}
                                 </div>
 
                                 {/* Col 2: Date */}
                                 <div className="bill-date">
-                                    {new Date(bill.dueDate).getDate()}
+                                    {new Date(bill.dueDate).toLocaleDateString('en-US', {
+                                        month: '2-digit',
+                                        day: '2-digit',
+                                        year: 'numeric'
+                                    })}
                                 </div>
 
                                 {/* Col 3: Name & Note Input */}
@@ -326,8 +440,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                                         <>
                                             {bill.name}
                                             {bill.note && (
-                                                <span style={{ opacity: 0.5, fontStyle: 'italic', marginLeft: '0.5rem', fontSize: '0.85em' }}>
-                                                    — {bill.note}
+                                                <span style={{ opacity: 0.7, fontStyle: 'italic', marginLeft: '1rem', fontSize: '0.85em' }}>
+                                                    Note: {bill.note}
                                                 </span>
                                             )}
                                         </>
@@ -382,9 +496,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                                 {/* Col 6: Paid */}
                                 <div className="bill-actions">
                                     <button
-                                        className="mark-paid-btn"
-                                        onClick={() => setShowPaymentModal(bill.id)}
-                                        title="Mark as paid"
+                                        className={`mark-paid-btn ${isPreviewMode ? 'disabled-preview' : ''}`}
+                                        onClick={() => isPreviewMode ? handlePreviewPayAttempt() : setShowPaymentModal(bill.id)}
+                                        title={isPreviewMode ? "Complete current month first" : "Mark as paid"}
                                     >
                                         {bill.isPaid ? '✓' : ''}
                                     </button>
@@ -452,13 +566,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                             <div className="stat-value">{CalculationEngine.formatCurrency(dueIn2Weeks)}</div>
                         </div>
 
-                        <button
-                            className="settings-btn"
-                            onClick={() => setShowSettingsModal(true)}
-                            aria-label="Open Settings"
-                        >
-                            ⚙️ Settings
-                        </button>
                     </div>
                 </div>
             </div>
@@ -468,7 +575,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                 {showNewMonthModal && (
                     <NewMonthModal
                         isOpen={showNewMonthModal}
-                        unpaidBills={unpaidBills}
+                        unpaidBills={activeMonthBills.filter(b => !b.isPaid)}
                         onConfirm={confirmNewMonth}
                         onCancel={() => setShowNewMonthModal(false)}
                     />

@@ -37,6 +37,9 @@ function createWindow() {
         resizable: true,
     });
 
+    // Start maximized (fullscreen window)
+    mainWindow.maximize();
+
     // Load the app
     if (process.env.NODE_ENV === 'development') {
         mainWindow.loadURL('http://localhost:5173');

@@ -253,56 +253,64 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             {/* Reset Confirmation Modal */}
             <AnimatePresence>
                 {showResetConfirm && (
-                    <ConfirmationModal
-                        isOpen={showResetConfirm}
-                        title="Reset Application"
-                        message="Are you absolutely sure you want to reset the app? All your data will be permanently deleted. This action cannot be undone."
-                        confirmLabel="Yes, Reset Everything"
-                        isDestructive={true}
-                        onConfirm={handleResetConfirm}
-                        onCancel={() => setShowResetConfirm(false)}
-                    />
+                    <div className="settings-sub-modal">
+                        <ConfirmationModal
+                            isOpen={showResetConfirm}
+                            title="Reset Application"
+                            message="Are you absolutely sure you want to reset the app? All your data will be permanently deleted. This action cannot be undone."
+                            confirmLabel="Yes, Reset Everything"
+                            isDestructive={true}
+                            onConfirm={handleResetConfirm}
+                            onCancel={() => setShowResetConfirm(false)}
+                        />
+                    </div>
                 )}
             </AnimatePresence>
 
             {/* Delete Payment Method Confirmation */}
             <AnimatePresence>
                 {methodToDelete && (
-                    <ConfirmationModal
-                        isOpen={!!methodToDelete}
-                        title="Delete Payment Method"
-                        message={`Are you sure you want to remove "${methodToDelete}"? This will not affect existing bills using this method.`}
-                        confirmLabel="Delete"
-                        isDestructive={true}
-                        onConfirm={confirmDeleteMethod}
-                        onCancel={() => setMethodToDelete(null)}
-                    />
+                    <div className="settings-sub-modal">
+                        <ConfirmationModal
+                            isOpen={!!methodToDelete}
+                            title="Delete Payment Method"
+                            message={`Are you sure you want to remove "${methodToDelete}"? This will not affect existing bills using this method.`}
+                            confirmLabel="Delete"
+                            isDestructive={true}
+                            onConfirm={confirmDeleteMethod}
+                            onCancel={() => setMethodToDelete(null)}
+                        />
+                    </div>
                 )}
             </AnimatePresence>
 
             {/* Delete PayInfo Confirmation */}
             <AnimatePresence>
                 {payInfoToDelete && (
-                    <ConfirmationModal
-                        isOpen={!!payInfoToDelete}
-                        title="Delete Income Source"
-                        message="Are you sure you want to remove this income source? This action cannot be undone."
-                        confirmLabel="Delete"
-                        isDestructive={true}
-                        onConfirm={confirmDeletePayInfo}
-                        onCancel={() => setPayInfoToDelete(null)}
-                    />
+                    <div className="settings-sub-modal">
+                        <ConfirmationModal
+                            isOpen={!!payInfoToDelete}
+                            title="Delete Income Source"
+                            message="Are you sure you want to remove this income source? This action cannot be undone."
+                            confirmLabel="Delete"
+                            isDestructive={true}
+                            onConfirm={confirmDeletePayInfo}
+                            onCancel={() => setPayInfoToDelete(null)}
+                        />
+                    </div>
                 )}
             </AnimatePresence>
 
             {/* Edit PayInfo Modal - Reusing from PayInfoHeader */}
             <AnimatePresence>
                 {editingPayInfo && (
-                    <PayInfoFormModal
-                        payInfo={editingPayInfo}
-                        onSave={handleSavePayInfo}
-                        onClose={() => setEditingPayInfo(null)}
-                    />
+                    <div className="settings-sub-modal">
+                        <PayInfoFormModal
+                            payInfo={editingPayInfo}
+                            onSave={handleSavePayInfo}
+                            onClose={() => setEditingPayInfo(null)}
+                        />
+                    </div>
                 )}
             </AnimatePresence>
         </>

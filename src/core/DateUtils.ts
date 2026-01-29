@@ -127,6 +127,53 @@ export class DateUtils {
         return targetDate >= now && targetDate <= futureDate;
     }
 
+    // ── Month Navigation Helpers ──
+
+    /** Get current month as "YYYY-MM" */
+    static getCurrentMonth(): string {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    /** Extract "YYYY-MM" from a date string (YYYY-MM-DD or ISO) */
+    static getMonthFromDate(dateStr: string): string {
+        if (!dateStr) return this.getCurrentMonth();
+        if (dateStr.includes('T')) dateStr = dateStr.split('T')[0];
+        const parts = dateStr.split('-');
+        return `${parts[0]}-${parts[1]}`;
+    }
+
+    /** Add months to a "YYYY-MM" string, returns "YYYY-MM" */
+    static addMonthsToMonth(monthStr: string, count: number): string {
+        const [year, month] = monthStr.split('-').map(Number);
+        const d = new Date(year, month - 1 + count, 1);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    /** Compare two "YYYY-MM" strings: -1 if a<b, 0 if equal, 1 if a>b */
+    static compareMonths(a: string, b: string): number {
+        if (a < b) return -1;
+        if (a > b) return 1;
+        return 0;
+    }
+
+    /** "YYYY-MM" → "January 2025" */
+    static getMonthDisplay(monthStr: string): string {
+        const [year, month] = monthStr.split('-').map(Number);
+        const d = new Date(year, month - 1, 1);
+        return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    }
+
+    /** Current date as "Tuesday, January 28, 2025" */
+    static getCurrentDateDisplay(): string {
+        return new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    }
+
     /**
      * Get days until date (ignoring time)
      */

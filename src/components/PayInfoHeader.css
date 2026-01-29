@@ -80,8 +80,8 @@
 .pay-delete-btn {
     width: 28px;
     height: 28px;
-    min-width: 44px; /* WCAG touch target */
-    min-height: 44px; /* WCAG touch target */
+    min-width: 28px;
+    min-height: 28px;
     border-radius: 50%;
     background: rgba(255, 50, 50, 0.2);
     border: none;
@@ -105,8 +105,8 @@
 .pay-delete-indicator {
     width: 28px;
     height: 28px;
-    min-width: 44px; /* WCAG touch target */
-    min-height: 44px; /* WCAG touch target */
+    min-width: 28px;
+    min-height: 28px;
     border-radius: 50%;
     background: rgba(255, 50, 50, 0.15);
     border: 1px solid rgba(255, 50, 50, 0.3);
@@ -150,8 +150,8 @@
 .add-pay-header-btn {
     width: 32px;
     height: 32px;
-    min-width: 44px; /* WCAG touch target */
-    min-height: 44px; /* WCAG touch target */
+    min-width: 28px;
+    min-height: 28px;
     border-radius: 50%;
     background: rgba(212, 175, 55, 0.15);
     border: 1px solid rgba(212, 175, 55, 0.3);

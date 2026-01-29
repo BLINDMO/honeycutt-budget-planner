@@ -349,6 +349,47 @@
 }
 
 /* ============================================================================
+   RADIO GROUP
+   ============================================================================ */
+
+.radio-group {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9375rem;
+    padding: 0.5rem 0;
+    transition: color 0.2s ease;
+}
+
+.radio-option:hover {
+    color: rgba(255, 255, 255, 1);
+}
+
+.radio-option input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: #d4af37;
+    flex-shrink: 0;
+}
+
+.radio-option span {
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+}
+
+/* ============================================================================
    BALANCE FIELDS
    ============================================================================ */
 
@@ -359,6 +400,7 @@
     background: rgba(212, 175, 55, 0.05);
     border: 1px solid rgba(212, 175, 55, 0.15);
     border-radius: 0.75rem;
+    will-change: transform, opacity;
 }
 
 /* ============================================================================

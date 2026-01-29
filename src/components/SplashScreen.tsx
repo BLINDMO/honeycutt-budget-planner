@@ -18,7 +18,8 @@ type SplashPhase = 'reveal' | 'hold' | 'exit';
 
 const TIMINGS = {
     REVEAL_DURATION: 1500,
-    HOLD_DURATION: 5000,
+    HOLD_DURATION: 3700,
+    EXIT_DURATION: 1000,
     EXIT_START: 6200,
 } as const;
 
@@ -38,7 +39,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
     useEffect(() => {
         const timers = [
             setTimeout(() => setPhase('hold'), TIMINGS.REVEAL_DURATION),
-            setTimeout(() => setPhase('exit'), TIMINGS.HOLD_DURATION),
+            setTimeout(() => setPhase('exit'), TIMINGS.EXIT_START - TIMINGS.EXIT_DURATION),
             setTimeout(onComplete, TIMINGS.EXIT_START),
         ];
 

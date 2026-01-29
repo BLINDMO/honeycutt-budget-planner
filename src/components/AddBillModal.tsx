@@ -14,7 +14,9 @@ export const AddBillModal: React.FC<AddBillModalProps> = ({ onClose, onAdd }) =>
     // Form State
     const [name, setName] = useState('');
     const [amount, setAmount] = useState('');
-    const [day, setDay] = useState('');
+    const [dueDate, setDueDate] = useState('');
+    const [frequency, setFrequency] = useState<'one-time' | 'monthly'>('one-time');
+    const [amountVaries, setAmountVaries] = useState(false);
     const [hasBalance, setHasBalance] = useState(false);
     const [balance, setBalance] = useState('');
     const [monthlyPayment, setMonthlyPayment] = useState('');
@@ -31,36 +33,9 @@ export const AddBillModal: React.FC<AddBillModalProps> = ({ onClose, onAdd }) =>
         return () => clearTimeout(timer);
     }, []);
 
-    const isValidDay = (d: number) => d >= 1 && d <= 31;
-
-    // Check if day exists in all months and provide warning
-    const validateDay = (d: number): { valid: boolean; warning?: string } => {
-        if (d < 1 || d > 31) return { valid: false };
-
-        const today = new Date();
-        const daysInCurrentMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-
-        if (d > daysInCurrentMonth) {
-            return {
-                valid: true,
-                warning: `Day ${d} doesn't exist in ${today.toLocaleString('en-US', { month: 'long' })}. Bill will be due on the last day of months with fewer than ${d} days.`
-            };
-        } else if (d > 28) {
-            return {
-                valid: true,
-                warning: `Some months have fewer than ${d} days. Bill will be due on the last day of those months.`
-            };
-        }
-
-        return { valid: true };
-    };
-
-    const dayValidation = day ? validateDay(parseInt(day)) : { valid: true };
-
     const isFormValid = name.trim() !== '' &&
-        amount !== '' &&
-        day !== '' &&
-        isValidDay(parseInt(day));
+        dueDate !== '' &&
+        (frequency === 'one-time' ? amount !== '' : (amountVaries || amount !== ''));
 
     // Calculate next due date based on day (safely handles month overflow)
     const getNextDueDate = (dayOfMonth: number) => {
@@ -125,19 +100,22 @@ export const AddBillModal: React.FC<AddBillModalProps> = ({ onClose, onAdd }) =>
             id: crypto.randomUUID(),
             name: name.trim(),
             amount: parsedAmount,
-            dueDate: getNextDueDate(parseInt(day)),
+            dueDate: dueDate,
+            frequency: frequency,
             isPaid: false,
             hasBalance: hasBalance,
             balance: parsedBalance,
             monthlyPayment: parsedMonthlyPayment,
             interestRate: parsedInterestRate,
-            isRecurring: true,
+            isRecurring: frequency === 'monthly',
             note: ''
         };
 
         onAdd(newBill);
         onClose();
     };
+
+    const isMonthly = frequency === 'monthly';
 
     return (
         <motion.div
@@ -148,7 +126,7 @@ export const AddBillModal: React.FC<AddBillModalProps> = ({ onClose, onAdd }) =>
             onClick={onClose}
         >
             <motion.div
-                className="add-bill-modal-content glass-pane"
+                className={`add-bill-modal-content glass-pane ${isMonthly ? 'add-bill-wide' : ''}`}
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -161,132 +139,209 @@ export const AddBillModal: React.FC<AddBillModalProps> = ({ onClose, onAdd }) =>
                 </div>
 
                 <form onSubmit={handleSubmit}>
-                    {/* Bill Name */}
-                    <div className="bill-form-group">
-                        <label>Bill Name</label>
-                        <input
-                            ref={nameInputRef}
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g. Electric Bill"
-                            autoFocus
-                            required
-                        />
-                    </div>
-
-                    {/* Amount & Day Row */}
-                    <div className="bill-form-row">
-                        <div className="bill-form-group">
-                            <label>Amount Due</label>
-                            <div className="input-with-icon-wrapper">
-                                <span className="currency-icon">$</span>
+                    <div className={`bill-form-layout ${isMonthly ? 'bill-form-two-col' : ''}`}>
+                        {/* LEFT COLUMN - Core fields (always visible) */}
+                        <div className="bill-form-left">
+                            {/* Bill Name */}
+                            <div className="bill-form-group">
+                                <label>Bill Name</label>
                                 <input
-                                    type="number"
-                                    value={amount}
-                                    onChange={(e) => setAmount(e.target.value)}
-                                    placeholder="0.00"
-                                    step="0.01"
-                                    min="0"
+                                    ref={nameInputRef}
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder="e.g. Electric Bill"
+                                    autoFocus
                                     required
                                 />
                             </div>
-                        </div>
 
-                        <div className="bill-form-group">
-                            <label>Day of Month Due</label>
-                            <input
-                                type="number"
-                                value={day}
-                                onChange={(e) => setDay(e.target.value)}
-                                placeholder="1-31"
-                                min="1"
-                                max="31"
-                                required
-                            />
-                            {dayValidation.warning && (
-                                <div className="day-warning" style={{
-                                    fontSize: '0.85em',
-                                    color: '#ffa500',
-                                    marginTop: '0.3rem',
-                                    fontStyle: 'italic'
-                                }}>
-                                    ⚠️ {dayValidation.warning}
+                            {/* Frequency Radio Buttons */}
+                            <div className="bill-form-group">
+                                <label>Frequency</label>
+                                <div className="radio-group">
+                                    <label className="radio-option">
+                                        <input
+                                            type="radio"
+                                            name="frequency"
+                                            value="one-time"
+                                            checked={frequency === 'one-time'}
+                                            onChange={(e) => setFrequency(e.target.value as 'one-time' | 'monthly')}
+                                        />
+                                        <span>One Time</span>
+                                    </label>
+                                    <label className="radio-option">
+                                        <input
+                                            type="radio"
+                                            name="frequency"
+                                            value="monthly"
+                                            checked={frequency === 'monthly'}
+                                            onChange={(e) => setFrequency(e.target.value as 'one-time' | 'monthly')}
+                                        />
+                                        <span>Monthly</span>
+                                    </label>
                                 </div>
-                            )}
-                        </div>
-                    </div>
+                            </div>
 
-                    {/* Has Balance Toggle */}
-                    <div className="bill-form-group">
-                        <label className="checkbox-wrapper">
-                            <input
-                                type="checkbox"
-                                checked={hasBalance}
-                                onChange={(e) => {
-                                    const isChecked = e.target.checked;
-                                    setHasBalance(isChecked);
-                                    // Auto-prefill payment if checking the box and payment is empty
-                                    if (isChecked && !monthlyPayment && amount) {
-                                        setMonthlyPayment(amount);
-                                    }
-                                }}
-                            />
-                            This bill has a total payoff balance (e.g. Credit Card, Loan)
-                        </label>
-                    </div>
+                            {/* Due Date */}
+                            <div className="bill-form-group">
+                                <label>
+                                    {isMonthly ? 'Date Due Each Month' : 'Due Date'}
+                                </label>
+                                <input
+                                    type="date"
+                                    value={dueDate}
+                                    onChange={(e) => setDueDate(e.target.value)}
+                                    onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+                                    required
+                                    className="date-input-full-click"
+                                />
+                            </div>
 
-                    {/* Balance Fields */}
-                    <AnimatePresence>
-                        {hasBalance && (
-                            <motion.div
-                                className="balance-section"
-                                initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                                animate={{ height: 'auto', opacity: 1, marginTop: '1.5rem' }}
-                                exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                            >
+                            {/* Amount for One-Time Bills */}
+                            {!isMonthly && (
                                 <div className="bill-form-group">
-                                    <label>Total Balance Remaining</label>
+                                    <label>Amount Due</label>
                                     <div className="input-with-icon-wrapper">
                                         <span className="currency-icon">$</span>
                                         <input
                                             type="number"
-                                            value={balance}
-                                            onChange={(e) => setBalance(e.target.value)}
+                                            value={amount}
+                                            onChange={(e) => setAmount(e.target.value)}
                                             placeholder="0.00"
                                             step="0.01"
+                                            min="0"
+                                            required
                                         />
                                     </div>
                                 </div>
+                            )}
+                        </div>
 
-                                <div className="bill-form-row">
-                                    <div className="bill-form-group">
-                                        <label>APR Interest Rate (%)</label>
-                                        <input
-                                            type="number"
-                                            value={interestRate}
-                                            onChange={(e) => setInterestRate(e.target.value)}
-                                            placeholder="0.00"
-                                            step="0.01"
-                                        />
+                        {/* RIGHT COLUMN - Monthly options (only when monthly is selected) */}
+                        <AnimatePresence>
+                            {isMonthly && (
+                                <motion.div
+                                    className="bill-form-right"
+                                    initial={{ opacity: 0, x: 30, width: 0 }}
+                                    animate={{ opacity: 1, x: 0, width: 'auto' }}
+                                    exit={{ opacity: 0, x: 30, width: 0 }}
+                                    transition={{ duration: 0.3, ease: "easeOut" }}
+                                >
+                                    <div className="monthly-options-header">
+                                        <span className="monthly-options-label">Monthly Options</span>
                                     </div>
+
+                                    {/* Amount Variation */}
                                     <div className="bill-form-group">
-                                        <label>Payment</label>
-                                        <div className="input-with-icon-wrapper">
-                                            <span className="currency-icon">$</span>
+                                        <label className="checkbox-wrapper">
                                             <input
-                                                type="number"
-                                                value={monthlyPayment}
-                                                onChange={(e) => setMonthlyPayment(e.target.value)}
-                                                placeholder="0.00"
-                                                step="0.01"
+                                                type="checkbox"
+                                                checked={amountVaries}
+                                                onChange={(e) => setAmountVaries(e.target.checked)}
                                             />
-                                        </div>
+                                            Amount varies each month
+                                        </label>
                                     </div>
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+
+                                    {/* Amount field - only if not varying */}
+                                    {!amountVaries && (
+                                        <div className="bill-form-group">
+                                            <label>Amount Due</label>
+                                            <div className="input-with-icon-wrapper">
+                                                <span className="currency-icon">$</span>
+                                                <input
+                                                    type="number"
+                                                    value={amount}
+                                                    onChange={(e) => setAmount(e.target.value)}
+                                                    placeholder="0.00"
+                                                    step="0.01"
+                                                    min="0"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Balance Tracker Checkbox */}
+                                    <div className="bill-form-group">
+                                        <label className="checkbox-wrapper">
+                                            <input
+                                                type="checkbox"
+                                                checked={hasBalance}
+                                                onChange={(e) => {
+                                                    const isChecked = e.target.checked;
+                                                    setHasBalance(isChecked);
+                                                    if (isChecked && !monthlyPayment && amount) {
+                                                        setMonthlyPayment(amount);
+                                                    }
+                                                }}
+                                            />
+                                            Balance Tracker
+                                        </label>
+                                        <span className="balance-tracker-hint">
+                                            For payoff date calculations
+                                        </span>
+                                    </div>
+
+                                    {/* Balance Tracker Fields */}
+                                    <AnimatePresence>
+                                        {hasBalance && (
+                                            <motion.div
+                                                className="balance-section"
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                transition={{ duration: 0.25, ease: "easeInOut" }}
+                                                style={{ overflow: 'hidden' }}
+                                            >
+                                                <div className="balance-fields-inner">
+                                                    <div className="bill-form-group">
+                                                        <label>Current Balance</label>
+                                                        <div className="input-with-icon-wrapper">
+                                                            <span className="currency-icon">$</span>
+                                                            <input
+                                                                type="number"
+                                                                value={balance}
+                                                                onChange={(e) => setBalance(e.target.value)}
+                                                                placeholder="0.00"
+                                                                step="0.01"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bill-form-group">
+                                                        <label>Monthly Payment</label>
+                                                        <div className="input-with-icon-wrapper">
+                                                            <span className="currency-icon">$</span>
+                                                            <input
+                                                                type="number"
+                                                                value={monthlyPayment}
+                                                                onChange={(e) => setMonthlyPayment(e.target.value)}
+                                                                placeholder="0.00"
+                                                                step="0.01"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bill-form-group">
+                                                        <label>APR % (Optional)</label>
+                                                        <input
+                                                            type="number"
+                                                            value={interestRate}
+                                                            onChange={(e) => setInterestRate(e.target.value)}
+                                                            placeholder="0.00"
+                                                            step="0.01"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
 
                     {/* Actions */}
                     <div className="modal-form-actions">

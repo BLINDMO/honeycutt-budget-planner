@@ -14,6 +14,7 @@ export interface Bill {
     interestRate?: number; // Stored as decimal (e.g., 0.18 for 18%)
     note?: string;
     isRecurring: boolean;
+    frequency?: 'one-time' | 'monthly'; // Bill frequency
     paidAmount?: number;
     paidMethod?: string;
     paidDate?: string; // YYYY-MM-DD format
