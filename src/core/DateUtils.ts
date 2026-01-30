@@ -108,7 +108,7 @@ export class DateUtils {
      * Get date input value (YYYY-MM-DD)
      */
     static toInputValue(date: Date): string {
-        return date.toISOString().split('T')[0];
+        return this.toLocalDateString(date);
     }
 
     /**

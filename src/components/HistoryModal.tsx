@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CalculationEngine } from '../core/CalculationEngine';
+import { DateUtils } from '../core/DateUtils';
 import './HistoryModal.css';
 
 interface HistoryItem {
@@ -28,7 +29,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history, onClose }) 
         history.forEach(item => {
             const dateStr = item.archivedDate || item.paidDate;
             if (dateStr) {
-                const date = new Date(dateStr);
+                const date = DateUtils.parseLocalDate(dateStr);
                 // Store as "YYYY-MM" for sorting/uniqueness
                 const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
                 months.add(key);
@@ -62,11 +63,11 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history, onClose }) 
         return history.filter(item => {
             const dateStr = item.archivedDate || item.paidDate;
             if (!dateStr) return false;
-            const d = new Date(dateStr);
+            const d = DateUtils.parseLocalDate(dateStr);
             return d.getFullYear() === year && (d.getMonth() + 1) === month;
         }).sort((a, b) => {
-            const dateA = new Date(a.archivedDate || a.paidDate || 0).getTime();
-            const dateB = new Date(b.archivedDate || b.paidDate || 0).getTime();
+            const dateA = DateUtils.parseLocalDate(a.archivedDate || a.paidDate || '').getTime();
+            const dateB = DateUtils.parseLocalDate(b.archivedDate || b.paidDate || '').getTime();
             return dateB - dateA;
         });
     }, [history, selectedMonthKey]);
@@ -180,7 +181,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ history, onClose }) 
                         currentMonthHistory.map((item) => (
                             <div key={item.id} className="history-item">
                                 <div className="col-date">
-                                    {item.archivedDate ? new Date(item.archivedDate).toLocaleDateString() : 'Active'}
+                                    {item.archivedDate ? DateUtils.parseLocalDate(item.archivedDate).toLocaleDateString() : 'Active'}
                                 </div>
                                 <div className="col-name">
                                     {item.name}

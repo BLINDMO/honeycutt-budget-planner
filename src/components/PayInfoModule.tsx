@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { DateUtils } from '@/core/DateUtils';
 import './PayInfoModule.css';
 
 export interface PayInfo {
@@ -17,7 +18,7 @@ interface PayInfoModuleProps {
 
 // Calculate the next pay dates based on last pay date and frequency
 const calculateNextPayDates = (lastPayDate: string, frequency: PayInfo['frequency']): Date[] => {
-    const last = new Date(lastPayDate);
+    const last = DateUtils.parseLocalDate(lastPayDate);
     const now = new Date();
     const dates: Date[] = [];
 

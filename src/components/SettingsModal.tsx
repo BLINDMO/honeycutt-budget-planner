@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ConfirmationModal } from './ConfirmationModal';
 import { PayInfo } from './PayInfoHeader';
+import { DateUtils } from '@/core/DateUtils';
 import './SettingsModal.css';
 
 interface SettingsModalProps {
@@ -83,8 +84,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     };
 
     const formatDate = (dateStr: string): string => {
-        // Parse safely: if ISO string use it, if YYYY-MM-DD parse as local
-        const date = dateStr.includes('T') ? new Date(dateStr) : (() => { const [y,m,d] = dateStr.split('-').map(Number); return new Date(y, m-1, d); })();
+        const date = DateUtils.parseLocalDate(dateStr);
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
