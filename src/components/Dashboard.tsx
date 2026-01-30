@@ -289,7 +289,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                 }
                 return b;
             })
-            .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+            .sort((a, b) => DateUtils.parseLocalDate(a.dueDate).getTime() - DateUtils.parseLocalDate(b.dueDate).getTime());
     };
 
     // Filter bills to viewing month (recurring bills appear in future months too)
@@ -399,7 +399,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                                     className={`header-action-btn edit-mode-btn ${isEditMode ? 'active' : ''}`}
                                     onClick={() => setIsEditMode(!isEditMode)}
                                 >
-                                    {isEditMode ? 'Done' : 'Delete a Bill'}
+                                    {isEditMode ? 'Done' : 'Edit/Delete Bill'}
                                 </button>
                             </div>
                         )}
@@ -493,7 +493,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
 
                                         {/* Col 2: Date */}
                                         <div className="bill-date">
-                                            {new Date(bill.dueDate).toLocaleDateString('en-US', {
+                                            {DateUtils.parseLocalDate(bill.dueDate).toLocaleDateString('en-US', {
                                                 month: '2-digit',
                                                 day: '2-digit',
                                                 year: 'numeric'

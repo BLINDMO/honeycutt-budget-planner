@@ -190,7 +190,9 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
     // ========================================================================
 
     const getDayFromDate = (dateString: string): string => {
-        return dateString ? new Date(dateString).getDate().toString() : '';
+        if (!dateString) return '';
+        const parts = dateString.split('-');
+        return parts.length === 3 ? String(Number(parts[2])) : '';
     };
 
     const formatCurrency = (value: number): string => {
