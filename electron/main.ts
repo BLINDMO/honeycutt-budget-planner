@@ -274,7 +274,7 @@ autoUpdater.on('update-downloaded', (info) => {
 
     // Close app and install immediately
     setTimeout(() => {
-        autoUpdater.quitAndInstall(false, true);
+        autoUpdater.quitAndInstall(true, true);
     }, 500);
 });
 
@@ -286,7 +286,7 @@ ipcMain.on('download-update', () => {
 
 ipcMain.on('install-update', () => {
     log.info('Installing update...');
-    autoUpdater.quitAndInstall(false, true);
+    autoUpdater.quitAndInstall(true, true);
 });
 
 ipcMain.on('check-for-updates', () => {
