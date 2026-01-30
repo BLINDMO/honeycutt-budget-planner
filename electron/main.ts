@@ -16,8 +16,72 @@ autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
 
 let mainWindow: BrowserWindow | null = null;
+let progressWindow: BrowserWindow | null = null;
 let isManualUpdateCheck = false;
 const budgetService = new BudgetDataService();
+
+function createProgressWindow(version: string) {
+    if (progressWindow) {
+        progressWindow.focus();
+        return;
+    }
+    progressWindow = new BrowserWindow({
+        width: 400,
+        height: 160,
+        resizable: false,
+        minimizable: false,
+        maximizable: false,
+        closable: false,
+        frame: false,
+        transparent: false,
+        backgroundColor: '#1a1a2e',
+        parent: mainWindow || undefined,
+        modal: true,
+        show: false,
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+        },
+    });
+
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head><style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #fff; padding: 24px; display: flex; flex-direction: column; justify-content: center; height: 100vh; }
+        h3 { font-size: 14px; font-weight: 600; margin-bottom: 6px; color: #d4af37; }
+        p { font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 14px; }
+        .bar-bg { width: 100%; height: 18px; background: rgba(255,255,255,0.08); border-radius: 9px; overflow: hidden; }
+        .bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #d4af37, #f0d060); border-radius: 9px; transition: width 0.3s ease; }
+        .percent { text-align: center; margin-top: 8px; font-size: 13px; font-weight: 600; color: #d4af37; }
+    </style></head>
+    <body>
+        <h3>Downloading Update v${version}</h3>
+        <p>Please wait while the update is downloaded...</p>
+        <div class="bar-bg"><div class="bar-fill" id="fill"></div></div>
+        <div class="percent" id="pct">0%</div>
+        <script>
+            window.setProgress = (p) => {
+                document.getElementById('fill').style.width = p + '%';
+                document.getElementById('pct').textContent = Math.round(p) + '%';
+            };
+        </script>
+    </body>
+    </html>`;
+
+    progressWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
+    progressWindow.once('ready-to-show', () => progressWindow?.show());
+    progressWindow.on('closed', () => { progressWindow = null; });
+}
+
+function closeProgressWindow() {
+    if (progressWindow) {
+        progressWindow.close();
+        progressWindow = null;
+    }
+    mainWindow?.setProgressBar(-1);
+}
 
 function createMenu() {
     const template: Electron.MenuItemConstructorOptions[] = [
@@ -170,8 +234,7 @@ autoUpdater.on('update-available', (info) => {
         }).then((result) => {
             if (result.response === 0) {
                 log.info('User chose to download update');
-                // Show a progress dialog via notification to renderer
-                mainWindow?.webContents.send('update-downloading');
+                createProgressWindow(info.version);
                 autoUpdater.downloadUpdate();
             } else {
                 log.info('User cancelled update');
@@ -186,32 +249,33 @@ autoUpdater.on('update-not-available', (info) => {
 
 autoUpdater.on('error', (err) => {
     log.error('Update error:', err);
-    mainWindow?.webContents.send('update-error', err.message);
+    closeProgressWindow();
+    if (mainWindow) {
+        dialog.showMessageBox(mainWindow, {
+            type: 'error',
+            title: 'Update Error',
+            message: 'Failed to download update.',
+            detail: err.message
+        });
+    }
 });
 
 autoUpdater.on('download-progress', (progressObj) => {
     log.info('Download progress:', progressObj.percent);
-    mainWindow?.webContents.send('update-progress', progressObj.percent);
+    mainWindow?.setProgressBar(progressObj.percent / 100);
+    if (progressWindow) {
+        progressWindow.webContents.executeJavaScript(`window.setProgress(${progressObj.percent})`).catch(() => {});
+    }
 });
 
 autoUpdater.on('update-downloaded', (info) => {
     log.info('Update downloaded:', info);
-    mainWindow?.webContents.send('update-downloaded', {
-        version: info.version
-    });
+    closeProgressWindow();
 
-    // Show a brief message then restart to install
-    if (mainWindow) {
-        dialog.showMessageBox(mainWindow, {
-            type: 'info',
-            title: 'Update Ready',
-            message: `Version ${info.version} has been downloaded.`,
-            detail: 'The application will now restart to apply the update.',
-            buttons: ['Restart Now']
-        }).then(() => {
-            autoUpdater.quitAndInstall(false, true);
-        });
-    }
+    // Close app and install immediately
+    setTimeout(() => {
+        autoUpdater.quitAndInstall(false, true);
+    }, 500);
 });
 
 // IPC Handlers for auto-update actions

@@ -203,15 +203,35 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
     };
 
     const markBillPaid = (billId: string, paymentMethod: string, paidAmount?: number) => {
-        const updatedBills = bills.map(bill =>
-            bill.id === billId ? {
-                ...bill,
-                isPaid: true,
-                paidAmount: paidAmount ?? bill.amount,
-                paidMethod: paymentMethod,
-                paidDate: new Date().toISOString()
-            } : bill
-        );
+        const bill = bills.find(b => b.id === billId);
+        if (!bill) return;
+
+        // For recurring bills in preview (future) months, store payment per-month
+        const billMonth = DateUtils.getMonthFromDate(bill.dueDate);
+        const isProjectedFuture = bill.isRecurring && DateUtils.compareMonths(viewingMonth, billMonth) > 0;
+
+        const updatedBills = bills.map(b => {
+            if (b.id !== billId) return b;
+            if (isProjectedFuture) {
+                // Store advance payment in paidMonths without touching base isPaid
+                const paidMonths = { ...(b.paidMonths || {}) };
+                paidMonths[viewingMonth] = {
+                    paidAmount: paidAmount ?? b.amount,
+                    paidMethod: paymentMethod,
+                    paidDate: new Date().toISOString(),
+                };
+                return { ...b, paidMonths };
+            } else {
+                // Normal payment for current/active month
+                return {
+                    ...b,
+                    isPaid: true,
+                    paidAmount: paidAmount ?? b.amount,
+                    paidMethod: paymentMethod,
+                    paidDate: new Date().toISOString(),
+                };
+            }
+        });
         setBills(updatedBills);
         onDataChange(updatedBills, history);
         setShowPaymentModal(null);
@@ -256,7 +276,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                     const daysInMonth = new Date(vy, vm, 0).getDate();
                     const projectedDay = Math.min(day, daysInMonth);
                     const projectedDate = `${targetMonth}-${String(projectedDay).padStart(2, '0')}`;
-                    return { ...b, dueDate: projectedDate };
+                    // Check if this recurring bill was paid for this specific month
+                    const monthPayment = b.paidMonths?.[targetMonth];
+                    return {
+                        ...b,
+                        dueDate: projectedDate,
+                        isPaid: !!monthPayment,
+                        paidAmount: monthPayment?.paidAmount,
+                        paidMethod: monthPayment?.paidMethod,
+                        paidDate: monthPayment?.paidDate,
+                    };
                 }
                 return b;
             })
@@ -310,10 +339,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
         const maxMonth = DateUtils.addMonthsToMonth(activeMonth, 12);
         return DateUtils.compareMonths(viewingMonth, maxMonth) < 0;
     }, [viewingMonth, activeMonth]);
-
-    const handleAdvancePay = (billId: string) => {
-        setShowPaymentModal(billId);
-    };
 
     return (
         <div className="dashboard">
@@ -564,23 +589,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
 
                                         {/* Col 6: Paid */}
                                         <div className="bill-actions">
-                                            {isPreviewMode ? (
-                                                <button
-                                                    className={`advance-pay-btn ${bill.isPaid ? 'advance-paid' : ''}`}
-                                                    onClick={() => !bill.isPaid && handleAdvancePay(bill.id)}
-                                                    title={bill.isPaid ? "Paid in advance" : "Pay this bill in advance"}
-                                                >
-                                                    {bill.isPaid ? '✓' : 'Pay in Advance'}
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    className="mark-paid-btn"
-                                                    onClick={() => setShowPaymentModal(bill.id)}
-                                                    title="Mark as paid"
-                                                >
-                                                    {bill.isPaid ? '✓' : ''}
-                                                </button>
-                                            )}
+                                            <button
+                                                className="mark-paid-btn"
+                                                onClick={() => {
+                                                    if (bill.isPaid) return;
+                                                    if (isPreviewMode) {
+                                                        if (window.confirm(`Pay "${bill.name}" in advance for ${DateUtils.getMonthDisplay(viewingMonth)}?\n\nThis will only apply to this month and won't affect your current month's bills.`)) {
+                                                            setShowPaymentModal(bill.id);
+                                                        }
+                                                    } else {
+                                                        setShowPaymentModal(bill.id);
+                                                    }
+                                                }}
+                                                title={bill.isPaid ? (isPreviewMode ? "Paid in advance" : "Paid") : "Mark as paid"}
+                                            >
+                                                {bill.isPaid ? '✓' : ''}
+                                            </button>
                                         </div>
                                     </div>
                                 ))}

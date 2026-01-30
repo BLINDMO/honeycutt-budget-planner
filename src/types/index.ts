@@ -18,6 +18,7 @@ export interface Bill {
     paidAmount?: number;
     paidMethod?: string;
     paidDate?: string; // YYYY-MM-DD format
+    paidMonths?: Record<string, { paidAmount: number; paidMethod: string; paidDate: string }>;
 }
 
 export interface HistoryItem {
