@@ -575,8 +575,19 @@
     transform: scale(0.95);
 }
 
-/* Date input click to open calendar */
+/* Date input click to open calendar - make entire input open calendar */
 .date-input-full-click {
+    cursor: pointer;
+    position: relative;
+}
+
+.date-input-full-click::-webkit-calendar-picker-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
     cursor: pointer;
 }
 

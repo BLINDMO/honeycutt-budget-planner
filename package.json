@@ -1,6 +1,6 @@
 {
   "name": "honeycutt-budget-planner",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Professional budget tracking application with advanced debt payoff analytics",
   "main": "dist/main.js",
   "scripts": {
@@ -64,7 +64,8 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "artifactName": "Honeycutt-Budget-Planner-Setup-${version}.${ext}"
     }
   }
 }
