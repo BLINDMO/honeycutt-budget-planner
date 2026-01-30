@@ -83,7 +83,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     };
 
     const formatDate = (dateStr: string): string => {
-        const date = new Date(dateStr);
+        // Parse safely: if ISO string use it, if YYYY-MM-DD parse as local
+        const date = dateStr.includes('T') ? new Date(dateStr) : (() => { const [y,m,d] = dateStr.split('-').map(Number); return new Date(y, m-1, d); })();
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
@@ -335,7 +336,7 @@ const PayInfoFormModal: React.FC<PayInfoFormModalProps> = ({ payInfo, onSave, on
         onSave({
             id: payInfo.id,
             name: name.trim(),
-            lastPayDate: new Date(lastPayDate).toISOString(),
+            lastPayDate: (() => { const [y,m,d] = lastPayDate.split('-').map(Number); return new Date(y, m-1, d, 12).toISOString(); })(),
             frequency
         });
     };

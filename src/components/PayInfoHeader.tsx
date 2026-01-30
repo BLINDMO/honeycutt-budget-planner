@@ -278,7 +278,7 @@ const PayInfoFormModal: React.FC<PayInfoFormModalProps> = ({ payInfo, onSave, on
         onSave({
             id: payInfo?.id || `pay-${Date.now()}`,
             name: name.trim(),
-            lastPayDate: new Date(lastPayDate).toISOString(),
+            lastPayDate: (() => { const [y,m,d] = lastPayDate.split('-').map(Number); return new Date(y, m-1, d, 12).toISOString(); })(),
             frequency
         });
     };
