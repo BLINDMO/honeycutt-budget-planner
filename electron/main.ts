@@ -11,8 +11,8 @@ if (autoUpdater.logger && 'transports' in autoUpdater.logger) {
 }
 log.info('App starting...');
 
-// Auto-update configuration - fully automatic
-autoUpdater.autoDownload = true;
+// Auto-update configuration - download only when user approves
+autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
 
 let mainWindow: BrowserWindow | null = null;
@@ -155,15 +155,27 @@ autoUpdater.on('update-available', (info) => {
         releaseDate: info.releaseDate
     });
 
-    // Show dialog when manually checking for updates
-    if (isManualUpdateCheck && mainWindow) {
+    // Always show Update/Cancel dialog when update is available
+    if (mainWindow) {
+        const wasManual = isManualUpdateCheck;
         isManualUpdateCheck = false;
         dialog.showMessageBox(mainWindow, {
             type: 'info',
             title: 'Update Available',
             message: `A new version (v${info.version}) is available!`,
-            detail: `It will be downloaded automatically and installed when you close the app.\n\nCurrent version: v${app.getVersion()}`,
-            buttons: ['OK']
+            detail: `Current version: v${app.getVersion()}\n\nWould you like to download and install it now?`,
+            buttons: ['Update', 'Cancel'],
+            defaultId: 0,
+            cancelId: 1
+        }).then((result) => {
+            if (result.response === 0) {
+                log.info('User chose to download update');
+                // Show a progress dialog via notification to renderer
+                mainWindow?.webContents.send('update-downloading');
+                autoUpdater.downloadUpdate();
+            } else {
+                log.info('User cancelled update');
+            }
         });
     }
 });
@@ -187,6 +199,19 @@ autoUpdater.on('update-downloaded', (info) => {
     mainWindow?.webContents.send('update-downloaded', {
         version: info.version
     });
+
+    // Show a brief message then restart to install
+    if (mainWindow) {
+        dialog.showMessageBox(mainWindow, {
+            type: 'info',
+            title: 'Update Ready',
+            message: `Version ${info.version} has been downloaded.`,
+            detail: 'The application will now restart to apply the update.',
+            buttons: ['Restart Now']
+        }).then(() => {
+            autoUpdater.quitAndInstall(false, true);
+        });
+    }
 });
 
 // IPC Handlers for auto-update actions

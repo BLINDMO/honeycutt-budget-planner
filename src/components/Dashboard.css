@@ -5,7 +5,7 @@
     display: grid !important;
     /* Note | Day | Name | Amount | Balance | Paid */
     /* Tuned widths: Note(50) Day(80) Name(1fr) Amount(140) Balance(160) Paid(70) */
-    grid-template-columns: 50px 80px 1fr 140px 160px 70px !important;
+    grid-template-columns: 50px 80px 1fr 140px 140px 140px !important;
     gap: 1rem;
     padding: 0 1rem;
     margin-bottom: 0.75rem;
@@ -43,20 +43,20 @@
 }
 
 .header-balance {
-    width: 160px;
+    width: 140px;
     text-align: right;
     color: rgba(255, 255, 255, 0.35);
 }
 
 .header-paid {
-    width: 70px;
+    width: 140px;
     text-align: center;
 }
 
 /* Premium BILL ITEM GRID - Luxe micro-interactions */
 .bill-item {
     display: grid !important;
-    grid-template-columns: 50px 80px 1fr 140px 160px 70px !important;
+    grid-template-columns: 50px 80px 1fr 140px 140px 140px !important;
     gap: 0.75rem;
     padding: 0.625rem 1rem;
     margin-bottom: 0.375rem;
@@ -1265,7 +1265,8 @@
 
 /* Pay in Advance button for future/preview months */
 .advance-pay-btn {
-    padding: 0.3rem 0.6rem;
+    padding: 0.3rem 0.75rem;
+    white-space: nowrap;
     border-radius: 6px;
     background: rgba(212, 175, 55, 0.12);
     border: 1px solid rgba(212, 175, 55, 0.35);
