@@ -20,9 +20,10 @@ interface DashboardProps {
     onPayInfosChange?: (payInfos: PayInfo[]) => void;
     onActiveMonthChange?: (month: string) => void;
     onReset: () => void;
+    onLoadBackup?: (slot: number) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHistory, initialPayInfos, initialActiveMonth, onDataChange, onPayInfosChange, onActiveMonthChange, onReset }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHistory, initialPayInfos, initialActiveMonth, onDataChange, onPayInfosChange, onActiveMonthChange, onReset, onLoadBackup }) => {
     const [bills, setBills] = useState<Bill[]>(initialBills);
     const [history, setHistory] = useState<HistoryItem[]>(initialHistory);
     const [payInfos, setPayInfos] = useState<PayInfo[]>(initialPayInfos || []);
@@ -42,6 +43,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
     const [showHistory, setShowHistory] = useState(false);
     const [showAmountInputFor, setShowAmountInputFor] = useState<string | null>(null);
     const [isEditMode, setIsEditMode] = useState(false);
+    const [devModeActive, setDevModeActive] = useState(false);
+    const [devTestBillIds, setDevTestBillIds] = useState<string[]>([]);
+    const [preDevPaymentMethods, setPreDevPaymentMethods] = useState<string[]>([]);
 
     const [paymentMethods, setPaymentMethods] = useState<string[]>(() => {
         const saved = localStorage.getItem('payment_methods');
@@ -69,31 +73,100 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
         localStorage.setItem('payment_methods', JSON.stringify(methods));
     };
 
+    // Helper: format payoff info as "Time Left Until Payoff: X months — Est. Jun 2027"
+    const formatPayoffInfo = (monthsToPayoff: number) => {
+        const duration = CalculationEngine.formatPayoffTime(monthsToPayoff);
+        const now = new Date();
+        const payoffDate = new Date(now.getFullYear(), now.getMonth() + monthsToPayoff);
+        const estDate = payoffDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        return { duration, estDate };
+    };
+
     // --- LOGIC ---
 
     const confirmNewMonth = (unpaidDecisions: Array<{ billId: string; action: 'pay-now' | 'defer' | 'skip' }>) => {
+        // Auto-backup current state before month transition
+        try {
+            const backupData = {
+                bills, paidHistory: history, payInfos, activeMonth,
+                lastReset: '', isFirstTime: false, theme: 'dark' as const,
+            };
+            const entry = JSON.stringify({
+                timestamp: new Date().toISOString(),
+                month: activeMonth,
+                data: backupData,
+            });
+            const slot1 = localStorage.getItem('honeycutt_backup_slot_1');
+            const slot2 = localStorage.getItem('honeycutt_backup_slot_2');
+            if (!slot1) {
+                localStorage.setItem('honeycutt_backup_slot_1', entry);
+            } else if (!slot2) {
+                localStorage.setItem('honeycutt_backup_slot_2', entry);
+            } else {
+                const t1 = JSON.parse(slot1).timestamp;
+                const t2 = JSON.parse(slot2).timestamp;
+                localStorage.setItem(t1 <= t2 ? 'honeycutt_backup_slot_1' : 'honeycutt_backup_slot_2', entry);
+            }
+        } catch (e) {
+            console.error('Auto-backup failed:', e);
+        }
+
         // Create a decision map for quick lookup
         const decisionMap = new Map(unpaidDecisions.map(d => [d.billId, d.action]));
+        const newActiveMonth = DateUtils.addMonthsToMonth(activeMonth, 1);
 
-        // 1. Archive Paid Bills
-        const paidBillsToArchive = bills.filter(b => b.isPaid).map(b => ({
-            ...b,
-            archivedDate: new Date().toISOString(),
-            originalDueDate: b.dueDate
-        }));
+        // 1. Archive Paid Bills — both normally-paid AND advance-paid via paidMonths
+        const paidBillsToArchive: HistoryItem[] = [];
+        for (const b of bills) {
+            const advanceForCurrent = b.paidMonths?.[activeMonth];
+            const wasPaid = b.isPaid || !!advanceForCurrent;
+            if (wasPaid) {
+                paidBillsToArchive.push({
+                    id: b.id,
+                    name: b.name,
+                    paidAmount: advanceForCurrent?.paidAmount || b.paidAmount || b.amount,
+                    amount: b.amount,
+                    paidDate: advanceForCurrent?.paidDate || b.paidDate,
+                    paidMethod: advanceForCurrent?.paidMethod || b.paidMethod || 'Unknown',
+                    archivedDate: new Date().toISOString(),
+                    originalDueDate: b.dueDate,
+                    hasBalance: b.hasBalance,
+                    balance: b.balance,
+                    isRecurring: b.isRecurring,
+                });
+            }
+        }
 
         const newHistory = [...paidBillsToArchive, ...history];
         setHistory(newHistory);
 
         // 2. Roll over logic with unpaid bill decisions
         const updatedBills = bills.reduce<Bill[]>((acc, bill) => {
+            // Determine if the bill was effectively paid this month (normally or via advance)
+            const advanceForCurrent = bill.paidMonths?.[activeMonth];
+            const effectivelyPaid = bill.isPaid || !!advanceForCurrent;
+
             // Skip one-time bills - they don't roll over to next month
             if (bill.frequency === 'one-time') {
+                // Archive unpaid one-time bills so they don't silently disappear
+                if (!effectivelyPaid) {
+                    newHistory.push({
+                        id: bill.id,
+                        name: bill.name,
+                        paidAmount: 0,
+                        amount: bill.amount,
+                        paidDate: undefined,
+                        paidMethod: 'Skipped',
+                        archivedDate: new Date().toISOString(),
+                        isRecurring: false,
+                        originalDueDate: bill.dueDate,
+                    });
+                }
                 return acc;
             }
 
             // Check if this bill was unpaid and has a decision
-            const decision = !bill.isPaid ? decisionMap.get(bill.id) : undefined;
+            const decision = !effectivelyPaid ? decisionMap.get(bill.id) : undefined;
 
             // If user chose to defer this unpaid bill, don't include it
             if (decision === 'defer') {
@@ -103,17 +176,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
             let newBalance = bill.balance;
             let newAmount = bill.amount;
 
-            // Precise balance update: New Balance = Old Balance - (Payment - Interest)
-            if (bill.hasBalance && bill.balance) {
-                const paidAmt = bill.isPaid ? (bill.paidAmount || bill.amount) : 0;
+            // Precise balance update with interest accrual
+            if (bill.hasBalance && bill.balance != null && bill.balance > 0) {
+                const paidAmt = effectivelyPaid
+                    ? (advanceForCurrent?.paidAmount || bill.paidAmount || bill.amount)
+                    : 0;
 
-                // FIXED LOGIC: If paid amount covers the entire balance, balance becomes 0 (no interest).
+                // If paid amount covers the entire balance, balance becomes 0 (no interest).
                 if (paidAmt >= bill.balance) {
                     newBalance = 0;
                 } else {
-                    const interest = (bill.balance * ((bill.interestRate || 0) / 100)) / 12;
-                    const principalPaid = Math.max(0, paidAmt - interest);
-                    newBalance = Math.max(0, bill.balance - principalPaid);
+                    // Use cents-based math to avoid floating-point precision errors
+                    const balanceCents = Math.round(bill.balance * 100);
+                    const interestCents = Math.round((balanceCents * ((bill.interestRate || 0) / 100)) / 12);
+                    const paidCents = Math.round(paidAmt * 100);
+
+                    if (paidCents >= interestCents) {
+                        // Payment covers interest — remainder reduces principal
+                        const principalPaidCents = paidCents - interestCents;
+                        newBalance = Math.max(0, (balanceCents - principalPaidCents) / 100);
+                    } else {
+                        // Payment doesn't cover interest — unpaid interest added to balance
+                        const unpaidInterestCents = interestCents - paidCents;
+                        newBalance = (balanceCents + unpaidInterestCents) / 100;
+                    }
                 }
             }
 
@@ -123,20 +209,48 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
             }
 
             // REMOVE LOGIC: If it's a "has balance" bill and balance is now 0, remove it.
-            if (bill.hasBalance && (newBalance === undefined || newBalance <= 0)) {
+            // Credit accounts (isCreditAccount) are kept even at $0 balance.
+            if (bill.hasBalance && !bill.isCreditAccount && (newBalance === undefined || newBalance <= 0)) {
                 return acc;
             }
 
+            // Advance due date, preserving original day-of-month to prevent drift
+            const origDay = bill.originalDueDay || DateUtils.parseLocalDate(bill.dueDate).getDate();
+            const curDate = DateUtils.parseLocalDate(bill.dueDate);
+            const nextMonth = curDate.getMonth() + 1;
+            const nextYear = curDate.getFullYear() + (nextMonth > 11 ? 1 : 0);
+            const actualNextMonth = nextMonth % 12;
+            const daysInNextMonth = new Date(nextYear, actualNextMonth + 1, 0).getDate();
+            const newDay = Math.min(origDay, daysInNextMonth);
+            const newDueDate = `${nextYear}-${String(actualNextMonth + 1).padStart(2, '0')}-${String(newDay).padStart(2, '0')}`;
+
+            // Clean paidMonths: remove entries for months <= new active month
+            // Only keep legitimate future advance payments
+            let cleanedPaidMonths: Record<string, { paidAmount: number; paidMethod: string; paidDate: string }> | undefined;
+            if (bill.paidMonths) {
+                const kept: Record<string, { paidAmount: number; paidMethod: string; paidDate: string }> = {};
+                for (const [month, payment] of Object.entries(bill.paidMonths)) {
+                    if (DateUtils.compareMonths(month, newActiveMonth) > 0) {
+                        kept[month] = payment;
+                    }
+                }
+                cleanedPaidMonths = Object.keys(kept).length > 0 ? kept : undefined;
+            }
+
+            // If this bill was paid in advance for the new active month, carry that forward
+            const advanceForNewMonth = bill.paidMonths?.[newActiveMonth];
+
             acc.push({
                 ...bill,
-                isPaid: false,
-                paidAmount: 0,
-                paidMethod: undefined,
-                paidDate: undefined,
+                isPaid: !!advanceForNewMonth,
+                paidAmount: advanceForNewMonth?.paidAmount ?? 0,
+                paidMethod: advanceForNewMonth?.paidMethod ?? undefined,
+                paidDate: advanceForNewMonth?.paidDate ?? undefined,
+                paidMonths: cleanedPaidMonths,
                 balance: newBalance,
                 amount: newAmount,
-                // Move due date 1 month forward (safely handles month overflow)
-                dueDate: DateUtils.addMonths(bill.dueDate, 1)
+                dueDate: newDueDate,
+                originalDueDay: origDay,
             });
             return acc;
         }, []);
@@ -146,7 +260,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
         setShowNewMonthModal(false);
 
         // Advance active month and viewing month
-        const newActiveMonth = DateUtils.addMonthsToMonth(activeMonth, 1);
         setActiveMonth(newActiveMonth);
         setViewingMonth(newActiveMonth);
         if (onActiveMonthChange) onActiveMonthChange(newActiveMonth);
@@ -180,9 +293,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
     };
 
     const togglePaid = (billId: string) => {
-        const updatedBills = bills.map(bill =>
-            bill.id === billId ? { ...bill, isPaid: !bill.isPaid } : bill
-        );
+        const updatedBills = bills.map(bill => {
+            if (bill.id !== billId) return bill;
+            if (bill.isPaid) {
+                // Undo: clear payment data
+                return { ...bill, isPaid: false, paidAmount: undefined, paidMethod: undefined, paidDate: undefined };
+            }
+            // Don't allow toggling unpaid→paid without payment modal
+            return bill;
+        });
         setBills(updatedBills);
         onDataChange(updatedBills, history);
     };
@@ -271,8 +390,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
             .map(b => {
                 const bMonth = DateUtils.getMonthFromDate(b.dueDate);
                 if (b.isRecurring && bMonth !== targetMonth) {
-                    const [vy, vm] = targetMonth.split('-').map(Number);
-                    const day = DateUtils.parseLocalDate(b.dueDate).getDate();
+                    const tParts = targetMonth.split('-').map(Number);
+                    const vy = tParts[0] ?? 0, vm = tParts[1] ?? 1;
+                    const day = b.originalDueDay || DateUtils.parseLocalDate(b.dueDate).getDate();
                     const daysInMonth = new Date(vy, vm, 0).getDate();
                     const projectedDay = Math.min(day, daysInMonth);
                     const projectedDate = `${targetMonth}-${String(projectedDay).padStart(2, '0')}`;
@@ -287,6 +407,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                         paidDate: monthPayment?.paidDate,
                     };
                 }
+                // Check advance payments even for bills whose dueDate matches this month
+                if (b.paidMonths?.[targetMonth] && !b.isPaid) {
+                    const monthPayment = b.paidMonths[targetMonth];
+                    return {
+                        ...b,
+                        isPaid: true,
+                        paidAmount: monthPayment.paidAmount,
+                        paidMethod: monthPayment.paidMethod,
+                        paidDate: monthPayment.paidDate,
+                    };
+                }
                 return b;
             })
             .sort((a, b) => DateUtils.parseLocalDate(a.dueDate).getTime() - DateUtils.parseLocalDate(b.dueDate).getTime());
@@ -295,11 +426,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
     // Filter bills to viewing month (recurring bills appear in future months too)
     const monthBills = useMemo(() => getBillsForMonth(viewingMonth), [bills, viewingMonth]);
 
-    const unpaidBills = useMemo(() => monthBills.filter(b => !b.isPaid), [monthBills]);
-    const paidBills = useMemo(() => monthBills.filter(b => b.isPaid), [monthBills]);
+    // All bills for the month, excluding zero-balance credit accounts from main list
+    const allBills = useMemo(() => monthBills.filter(b => {
+        // Hide credit accounts with zero balance AND zero payment amount (nothing to show)
+        if (b.isCreditAccount && b.hasBalance && (b.balance == null || b.balance <= 0) && b.amount <= 0) return false;
+        return true;
+    }), [monthBills]);
+    const creditCards = useMemo(() => bills.filter(b => b.isCreditAccount), [bills]);
+    const recurringDebt = useMemo(() => bills.filter(b => b.hasBalance && !b.isCreditAccount), [bills]);
+    const hasDebtOverview = creditCards.length > 0 || recurringDebt.length > 0;
     const totalDue = useMemo(() => CalculationEngine.calculateTotalDue(monthBills), [monthBills]);
     const dueIn2Weeks = useMemo(() => CalculationEngine.calculateDueWithinDays(monthBills, 14), [monthBills]);
-    const unpaidCount = useMemo(() => unpaidBills.length, [unpaidBills]);
+    const totalPaidSpending = useMemo(() =>
+        CalculationEngine.roundCurrency(monthBills.filter(b => b.isPaid).reduce((sum, b) => sum + (b.paidAmount || b.amount), 0)),
+        [monthBills]
+    );
+    const unpaidCount = useMemo(() => allBills.filter(b => !b.isPaid).length, [allBills]);
 
     // Check if active month is complete (all bills paid)
     const activeMonthBills = useMemo(() => getBillsForMonth(activeMonth), [bills, activeMonth]);
@@ -329,9 +471,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
         }
     };
 
-    // Boundaries - can only go back 1 month before active (to see last month's summary)
+    // Boundaries - can go back up to 12 months to view past history
     const canGoBack = useMemo(() => {
-        const minMonth = DateUtils.addMonthsToMonth(activeMonth, -1);
+        const minMonth = DateUtils.addMonthsToMonth(activeMonth, -12);
         return DateUtils.compareMonths(viewingMonth, minMonth) > 0;
     }, [viewingMonth, activeMonth]);
 
@@ -459,7 +601,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                         <>
                             <div className="bill-list-header">
                                 <div className="header-note">NOTES</div>
-                                <div className="header-date">Day</div>
+                                <div className="header-date">Due Date</div>
                                 <div className="header-name">Bill Name</div>
                                 <div className="header-amount">Amount</div>
                                 <div className="header-balance">Balance</div>
@@ -467,8 +609,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                             </div>
 
                             <div className="bills-list">
-                                {unpaidBills.map((bill) => (
-                                    <div key={bill.id} className="bill-item">
+                                {allBills.map((bill) => (
+                                    <div key={bill.id} className={`bill-item ${bill.isPaid ? 'is-paid' : ''}`}>
                                         {/* Col 1: Note or Delete */}
                                         <div className="bill-note-col">
                                             {isEditMode ? (
@@ -476,6 +618,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                                                     className="delete-bill-btn"
                                                     onClick={() => deleteBill(bill.id)}
                                                     title="Delete Bill"
+                                                    aria-label={`Delete ${bill.name}`}
                                                 >
                                                     -
                                                 </button>
@@ -486,7 +629,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                                                     title={bill.note ? "Edit note" : "Add note"}
                                                     aria-label={bill.note ? `Edit note for ${bill.name}` : `Add note to ${bill.name}`}
                                                 >
-                                                    📓
+                                                    {bill.note ? 'Edit' : 'Add Note'}
                                                 </button>
                                             )}
                                         </div>
@@ -500,7 +643,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                                             })}
                                         </div>
 
-                                        {/* Col 3: Name & Note Input */}
+                                        {/* Col 3: Name + Paid Stamp */}
                                         <div className="bill-name">
                                             {showNoteFor === bill.id ? (
                                                 <div className="inline-note-input" onClick={(e) => e.stopPropagation()}>
@@ -532,17 +675,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                                                 </div>
                                             ) : (
                                                 <>
-                                                    {bill.name}
+                                                    <span className="bill-name-text">{bill.name}</span>
+                                                    {bill.isPaid && (
+                                                        <div className="paid-stamp-area">
+                                                            <span className="paid-rubber-stamp">PAID</span>
+                                                            <span className="paid-method-text">via {bill.paidMethod || 'Unknown'}</span>
+                                                        </div>
+                                                    )}
                                                     {bill.note && (
-                                                        <span style={{ opacity: 0.7, fontStyle: 'italic', marginLeft: '1rem', fontSize: '0.85em' }}>
-                                                            Note: {bill.note}
-                                                        </span>
+                                                        <span className="bill-note-inline">Note: {bill.note}</span>
                                                     )}
                                                 </>
                                             )}
                                         </div>
 
-                                        {/* Col 4: Amount - Editable */}
+                                        {/* Col 4: Amount + Payment Method */}
                                         <div className="bill-amount">
                                             {isEditMode ? (
                                                 <input
@@ -554,6 +701,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                                                     step="0.01"
                                                     min="0"
                                                 />
+                                            ) : bill.isPaid ? (
+                                                <div className="paid-amount-group">
+                                                    <span>{CalculationEngine.formatCurrency(bill.paidAmount || bill.amount)}</span>
+                                                    {bill.paidAmount != null && bill.paidAmount < bill.amount && (
+                                                        <span className="partial-badge">(Partial)</span>
+                                                    )}
+                                                </div>
                                             ) : (
                                                 bill.amount === 0 && !bill.hasBalance ? (
                                                     <button
@@ -570,7 +724,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
 
                                         {/* Col 5: Balance */}
                                         <div className="bill-balance-col">
-                                            {bill.hasBalance && bill.balance && (
+                                            {bill.hasBalance && bill.balance != null && bill.balance > 0 && (
                                                 <>
                                                     <span className="balance-amount">
                                                         {CalculationEngine.formatCurrency(bill.balance)}
@@ -587,90 +741,170 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                                             )}
                                         </div>
 
-                                        {/* Col 6: Paid */}
+                                        {/* Col 6: Pay / Undo */}
                                         <div className="bill-actions">
-                                            <button
-                                                className="mark-paid-btn"
-                                                onClick={() => {
-                                                    if (bill.isPaid) return;
-                                                    if (isPreviewMode) {
-                                                        if (window.confirm(`Pay "${bill.name}" in advance for ${DateUtils.getMonthDisplay(viewingMonth)}?\n\nThis will only apply to this month and won't affect your current month's bills.`)) {
+                                            {bill.isPaid ? (
+                                                <button
+                                                    className="undo-paid-btn"
+                                                    onClick={() => togglePaid(bill.id)}
+                                                    title="Undo Payment"
+                                                    aria-label={`Undo payment for ${bill.name}`}
+                                                >
+                                                    Undo
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    className="mark-paid-btn"
+                                                    onClick={() => {
+                                                        if (isPreviewMode) {
+                                                            if (window.confirm(`Pay "${bill.name}" in advance for ${DateUtils.getMonthDisplay(viewingMonth)}?\n\nThis will only apply to this month and won't affect your current month's bills.`)) {
+                                                                setShowPaymentModal(bill.id);
+                                                            }
+                                                        } else {
                                                             setShowPaymentModal(bill.id);
                                                         }
-                                                    } else {
-                                                        setShowPaymentModal(bill.id);
-                                                    }
-                                                }}
-                                                title={bill.isPaid ? (isPreviewMode ? "Paid in advance" : "Paid") : "Mark as paid"}
-                                            >
-                                                {bill.isPaid ? '✓' : ''}
-                                            </button>
+                                                    }}
+                                                    title="Mark as paid"
+                                                    aria-label={`Mark ${bill.name} as paid`}
+                                                >
+                                                    Pay
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
-                                {unpaidBills.length === 0 && (
+                                {allBills.length === 0 && (
                                     <div className="empty-state">
-                                        <p>All bills paid! 🎉</p>
+                                        <p>No bills for this month</p>
                                     </div>
                                 )}
                             </div>
                         </>
                     )}
+
                 </div>
 
-                {/* Right Column */}
+                {/* Right Column: Credit Accounts + Stats */}
                 <div className="right-column">
-                    <div className="pane paid-pane glass-pane">
-                        <div className="pane-header">
-                            <h2>Paid</h2>
-                            <button
-                                className="header-action-btn history-btn"
-                                onClick={() => setShowHistory(true)}
-                                style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
-                            >
-                                History
-                            </button>
+                    {hasDebtOverview && (
+                        <div className="pane credit-accounts-pane glass-pane">
+                            <div className="pane-header">
+                                <h2>Recurring Accounts Overview</h2>
+                            </div>
+                            <div className="credit-accounts-table">
+                                <div className="credit-accounts-row credit-accounts-row-header">
+                                    <span className="ca-col-name">Account</span>
+                                    <span className="ca-col-payment">Payment</span>
+                                    <span className="ca-col-balance">Balance</span>
+                                </div>
+
+                                {creditCards.length > 0 && (
+                                    <>
+                                        <div className="debt-section-label">Credit Cards</div>
+                                        {creditCards.map((card) => {
+                                            const balance = card.balance ?? 0;
+                                            const isPaidOff = balance <= 0;
+                                            const payoff = (!isPaidOff && card.monthlyPayment && card.monthlyPayment > 0)
+                                                ? CalculationEngine.calculatePayoff(balance, card.monthlyPayment, (card.interestRate || 0) / 100)
+                                                : null;
+                                            return (
+                                                <div key={card.id} className={`ca-item-block ${isPaidOff ? 'paid-off' : 'active'}`}>
+                                                    <div className="credit-accounts-row">
+                                                        <span className="ca-col-name" title={card.name}>{card.name}</span>
+                                                        <span className="ca-col-payment">{card.monthlyPayment ? CalculationEngine.formatCurrency(card.monthlyPayment) : '—'}</span>
+                                                        <span className="ca-col-balance">{CalculationEngine.formatCurrency(balance)}</span>
+                                                    </div>
+                                                    {payoff && (
+                                                        <div className="ca-payoff-row">
+                                                            {isFinite(payoff.monthsToPayoff) ? (() => {
+                                                                const info = formatPayoffInfo(payoff.monthsToPayoff);
+                                                                return (
+                                                                    <span className="ca-payoff-text">
+                                                                        Payoff: <strong>{info.duration}</strong> — Est. {info.estDate}
+                                                                    </span>
+                                                                );
+                                                            })() : (
+                                                                <span className="ca-payoff-text ca-payoff-warning">Payment too low to cover interest</span>
+                                                            )}
+                                                            <button className="ca-options-btn" onClick={() => setShowPayoffFor(card.id)}>Details</button>
+                                                        </div>
+                                                    )}
+                                                    {isPaidOff && (
+                                                        <div className="ca-payoff-row">
+                                                            <span className="ca-payoff-text ca-paid-off-text">Paid Off</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </>
+                                )}
+
+                                {recurringDebt.length > 0 && (
+                                    <>
+                                        {creditCards.length > 0 && <div className="debt-section-divider" />}
+                                        <div className="debt-section-label">Recurring Debt</div>
+                                        {recurringDebt.map((debt) => {
+                                            const balance = debt.balance ?? 0;
+                                            const isPaidOff = balance <= 0;
+                                            const payoff = (!isPaidOff && debt.monthlyPayment && debt.monthlyPayment > 0)
+                                                ? CalculationEngine.calculatePayoff(balance, debt.monthlyPayment, (debt.interestRate || 0) / 100)
+                                                : null;
+                                            return (
+                                                <div key={debt.id} className={`ca-item-block ${isPaidOff ? 'paid-off' : 'active'}`}>
+                                                    <div className="credit-accounts-row">
+                                                        <span className="ca-col-name" title={debt.name}>{debt.name}</span>
+                                                        <span className="ca-col-payment">{debt.monthlyPayment ? CalculationEngine.formatCurrency(debt.monthlyPayment) : '—'}</span>
+                                                        <span className="ca-col-balance">{CalculationEngine.formatCurrency(balance)}</span>
+                                                    </div>
+                                                    {payoff && (
+                                                        <div className="ca-payoff-row">
+                                                            {isFinite(payoff.monthsToPayoff) ? (() => {
+                                                                const info = formatPayoffInfo(payoff.monthsToPayoff);
+                                                                return (
+                                                                    <span className="ca-payoff-text">
+                                                                        Payoff: <strong>{info.duration}</strong> — Est. {info.estDate}
+                                                                    </span>
+                                                                );
+                                                            })() : (
+                                                                <span className="ca-payoff-text ca-payoff-warning">Payment too low to cover interest</span>
+                                                            )}
+                                                            <button className="ca-options-btn" onClick={() => setShowPayoffFor(debt.id)}>Details</button>
+                                                        </div>
+                                                    )}
+                                                    {isPaidOff && (
+                                                        <div className="ca-payoff-row">
+                                                            <span className="ca-payoff-text ca-paid-off-text">Paid Off</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </>
+                                )}
+                            </div>
                         </div>
-                        <div className="paid-list">
-                            {paidBills.map((bill) => (
-                                <motion.div
-                                    key={bill.id}
-                                    className="paid-item-clean"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                >
-                                    <div className="paid-info-group">
-                                        <div className="paid-main-text">
-                                            {bill.name} paid <span className="paid-amt-highlight">
-                                                {CalculationEngine.formatCurrency(bill.paidAmount || bill.amount)}
-                                            </span>
-                                        </div>
-                                        <div className="paid-sub-text">
-                                            from {bill.paidMethod || 'Unknown'}
-                                        </div>
-                                    </div>
-                                    <button
-                                        className="unpay-btn"
-                                        onClick={() => togglePaid(bill.id)}
-                                        title="Undo Payment"
-                                    >
-                                        Undo
-                                    </button>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </div>
+                    )}
 
                     <div className="pane stats-pane glass-pane relative-stats-pane">
                         <div className="mini-stat">
-                            <div className="stat-label">Total Due</div>
-                            <div className="stat-value">{CalculationEngine.formatCurrency(totalDue)}</div>
+                            <div className="stat-label">Remaining Balance Due This Month</div>
+                            <div className="stat-value stat-value-gold">{CalculationEngine.formatCurrency(totalDue)}</div>
                         </div>
                         <div className="mini-stat">
-                            <div className="stat-label">Due within the next 2 weeks</div>
-                            <div className="stat-value">{CalculationEngine.formatCurrency(dueIn2Weeks)}</div>
+                            <div className="stat-label">Due Within Next 2 Weeks</div>
+                            <div className="stat-value stat-value-orange">{CalculationEngine.formatCurrency(dueIn2Weeks)}</div>
                         </div>
-
+                        <div className="mini-stat">
+                            <div className="stat-label">Total Paid This Month</div>
+                            <div className="stat-value stat-value-green">{CalculationEngine.formatCurrency(totalPaidSpending)}</div>
+                        </div>
+                        <button
+                            className="history-btn"
+                            onClick={() => setShowHistory(true)}
+                        >
+                            Payment History
+                        </button>
                     </div>
                 </div>
             </div>
@@ -764,6 +998,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                 {showHistory && (
                     <HistoryModal
                         history={history}
+                        currentPaidBills={monthBills.filter(b => b.isPaid).map(b => ({
+                            id: b.id,
+                            name: b.name,
+                            paidAmount: b.paidAmount || b.amount,
+                            paidDate: b.paidDate,
+                            paidMethod: b.paidMethod,
+                            archivedDate: b.paidDate,
+                            hasBalance: b.hasBalance,
+                            balance: b.balance,
+                            isRecurring: b.isRecurring,
+                        }))}
                         onClose={() => setShowHistory(false)}
                     />
                 )}
@@ -780,9 +1025,79 @@ export const Dashboard: React.FC<DashboardProps> = ({ initialBills, initialHisto
                         payInfos={payInfos}
                         onPayInfosChange={handlePayInfosChange}
                         onResetApp={onReset}
+                        backups={(() => {
+                            const result: Array<{ slot: number; timestamp: string; month: string }> = [];
+                            for (const s of [1, 2]) {
+                                try {
+                                    const raw = localStorage.getItem(`honeycutt_backup_slot_${s}`);
+                                    if (raw) {
+                                        const parsed = JSON.parse(raw);
+                                        result.push({ slot: s, timestamp: parsed.timestamp, month: parsed.month });
+                                    }
+                                } catch { /* skip corrupted */ }
+                            }
+                            return result.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+                        })()}
+                        onLoadBackup={(slot) => {
+                            onLoadBackup?.(slot);
+                            setShowSettingsModal(false);
+                        }}
+                        onPopulateTestData={(newBills, methods) => {
+                            setPreDevPaymentMethods([...paymentMethods]);
+                            const updated = [...bills, ...newBills];
+                            setBills(updated);
+                            onDataChange(updated, history);
+                            const merged = [...new Set([...paymentMethods, ...methods])];
+                            setPaymentMethods(merged);
+                            localStorage.setItem('payment_methods', JSON.stringify(merged));
+                            setDevModeActive(true);
+                            setDevTestBillIds(newBills.map(b => b.id));
+                        }}
+                        onRemoveTestBills={(testIds) => {
+                            const updated = bills.filter(b => !testIds.includes(b.id));
+                            setBills(updated);
+                            onDataChange(updated, history);
+                            setPaymentMethods(preDevPaymentMethods);
+                            localStorage.setItem('payment_methods', JSON.stringify(preDevPaymentMethods));
+                            setDevModeActive(false);
+                            setDevTestBillIds([]);
+                        }}
                     />
                 )}
             </AnimatePresence>
+
+            {/* Persistent Dev Mode Banner */}
+            {devModeActive && (
+                <div className="dev-mode-banner">
+                    <span>Development Mode Active</span>
+                    <div className="dev-banner-actions">
+                        <button
+                            className="dev-banner-btn dev-banner-remove"
+                            onClick={() => {
+                                const updated = bills.filter(b => !devTestBillIds.includes(b.id));
+                                setBills(updated);
+                                onDataChange(updated, history);
+                                setPaymentMethods(preDevPaymentMethods);
+                                localStorage.setItem('payment_methods', JSON.stringify(preDevPaymentMethods));
+                                setDevModeActive(false);
+                                setDevTestBillIds([]);
+                            }}
+                        >
+                            Remove Test Data
+                        </button>
+                        <button
+                            className="dev-banner-btn dev-banner-reset"
+                            onClick={() => {
+                                onReset();
+                                setDevModeActive(false);
+                                setDevTestBillIds([]);
+                            }}
+                        >
+                            Full Reset
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -895,7 +1210,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ billName, currentNote, onSave, on
                 exit={{ scale: 0.9 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <h3>Add Note for {billName}</h3>
+                <h3>{currentNote ? 'Edit' : 'Add'} Note for {billName}</h3>
                 <textarea
                     ref={textAreaRef}
                     value={note}
@@ -949,7 +1264,9 @@ const PayoffModal: React.FC<PayoffModalProps> = ({ bill, onClose }) => {
 
     const getFutureDate = (months: number) => {
         if (months === 0) return "this month";
+        if (!isFinite(months)) return "never";
         const d = new Date();
+        d.setDate(1);
         d.setMonth(d.getMonth() + months);
         return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
     };

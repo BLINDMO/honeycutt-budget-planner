@@ -42,9 +42,11 @@
     transition: max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Wider modal when monthly is selected */
-.add-bill-modal-content.add-bill-wide {
-    max-width: 820px;
+/* Monthly divider */
+.monthly-divider {
+    margin: 0.75rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.15);
 }
 
 /* Premium top highlight */
@@ -77,36 +79,7 @@
     font-size: 0.85rem;
 }
 
-/* ============================================
-   Two-Column Form Layout
-   ============================================ */
-
-.bill-form-layout {
-    display: flex;
-    gap: 0;
-}
-
-.bill-form-layout.bill-form-two-col {
-    gap: 1.5rem;
-}
-
-.bill-form-left {
-    flex: 1;
-    min-width: 0;
-}
-
-.bill-form-right {
-    flex: 1;
-    min-width: 0;
-    border-left: 1px solid rgba(255, 255, 255, 0.08);
-    padding-left: 1.5rem;
-}
-
-.monthly-options-header {
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid rgba(212, 175, 55, 0.15);
-}
+/* Form layout — single column */
 
 .monthly-options-label {
     font-size: 0.8rem;
@@ -381,31 +354,6 @@
 }
 
 /* Responsive Design for AddBillModal */
-@media (max-width: 850px) {
-    .add-bill-modal-content.add-bill-wide {
-        max-width: 95vw;
-    }
-}
-
-@media (max-width: 680px) {
-    /* Stack columns on smaller screens */
-    .bill-form-layout.bill-form-two-col {
-        flex-direction: column;
-        gap: 0;
-    }
-
-    .bill-form-right {
-        border-left: none;
-        padding-left: 0;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        padding-top: 1rem;
-        margin-top: 0.5rem;
-    }
-
-    .add-bill-modal-content.add-bill-wide {
-        max-width: 95vw;
-    }
-}
 
 @media (max-width: 480px) {
     .add-bill-modal-content {

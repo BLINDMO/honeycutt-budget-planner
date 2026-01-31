@@ -4,6 +4,11 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { BudgetDataService } from './services/BudgetDataService';
 
+// Force 1:1 pixel rendering regardless of OS DPI/scaling settings.
+// This ensures every user sees the exact same layout at any Windows scale factor.
+app.commandLine.appendSwitch('high-dpi-support', '1');
+app.commandLine.appendSwitch('force-device-scale-factor', '1');
+
 // Configure logging
 autoUpdater.logger = log;
 if (autoUpdater.logger && 'transports' in autoUpdater.logger) {

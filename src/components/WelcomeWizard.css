@@ -666,6 +666,41 @@
     }
 }
 
+/* Monthly divider in wizard form */
+.wizard-monthly-divider {
+    margin: 0.75rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #d4af37;
+}
+
+/* Hint text under checkboxes */
+.wizard-hint {
+    display: block;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+    margin-top: 0.15rem;
+    margin-left: 1.75rem;
+}
+
+/* Empty preview placeholder */
+.empty-preview-placeholder {
+    height: 100%;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
+    padding: 2rem;
+}
+
 /* Very small heights (e.g. 600px tall screens) */
 @media (max-height: 700px) {
     .welcome-step h1 {

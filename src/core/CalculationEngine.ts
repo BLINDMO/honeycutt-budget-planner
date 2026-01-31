@@ -67,7 +67,25 @@ export class CalculationEngine {
         monthlyPayment = this.parseAmount(monthlyPayment);
         annualInterestRate = this.parseAmount(annualInterestRate);
 
-        if (balance <= 0 || monthlyPayment <= 0) {
+        if (balance <= 0) {
+            return {
+                monthsToPayoff: 0,
+                totalInterestPaid: 0,
+                totalAmountPaid: 0,
+                monthlyBreakdown: [],
+            };
+        }
+
+        if (monthlyPayment <= 0) {
+            // With no payment but positive interest, debt never pays off
+            if (annualInterestRate > 0) {
+                return {
+                    monthsToPayoff: Infinity,
+                    totalInterestPaid: Infinity,
+                    totalAmountPaid: Infinity,
+                    monthlyBreakdown: [],
+                };
+            }
             return {
                 monthsToPayoff: 0,
                 totalInterestPaid: 0,
@@ -83,6 +101,19 @@ export class CalculationEngine {
         let month = 0;
         const breakdown: PayoffProjection['monthlyBreakdown'] = [];
 
+        // Detect negative amortization: if payment can't cover monthly interest, debt grows forever
+        if (monthlyRate > 0) {
+            const firstMonthInterestCents = Math.round(remainingCents * monthlyRate);
+            if (this.toCents(monthlyPayment) <= firstMonthInterestCents) {
+                return {
+                    monthsToPayoff: Infinity,
+                    totalInterestPaid: Infinity,
+                    totalAmountPaid: Infinity,
+                    monthlyBreakdown: [],
+                };
+            }
+        }
+
         // Safety limit to prevent infinite loops
         const maxMonths = 600; // 50 years max
 
@@ -90,7 +121,7 @@ export class CalculationEngine {
             month++;
 
             // Calculate interest in cents
-            const interestCents = Math.round((remainingCents * monthlyRate) / 100);
+            const interestCents = Math.round(remainingCents * monthlyRate);
 
             // Determine actual payment (might be less than monthly if final payment)
             const totalPaymentNeededCents = remainingCents + interestCents;
@@ -148,7 +179,7 @@ export class CalculationEngine {
      */
     static calculateTotalDue(bills: Array<{ amount: number; isPaid: boolean }>): number {
         return this.roundCurrency(
-            bills.filter(b => !b.isPaid).reduce((sum, bill) => sum + bill.amount, 0)
+            bills.filter(b => !b.isPaid).reduce((sum, bill) => sum + (isNaN(bill.amount) ? 0 : bill.amount), 0)
         );
     }
 
@@ -171,6 +202,7 @@ export class CalculationEngine {
      * Format currency for display
      */
     static formatCurrency(amount: number): string {
+        if (isNaN(amount) || !isFinite(amount)) amount = 0;
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD',
@@ -182,7 +214,7 @@ export class CalculationEngine {
     /**
      * Round to 2 decimal places (prevents floating point errors)
      */
-    private static roundCurrency(amount: number): number {
+    static roundCurrency(amount: number): number {
         return Math.round(amount * 100) / 100;
     }
 
@@ -191,6 +223,7 @@ export class CalculationEngine {
      */
     static formatPayoffTime(months: number): string {
         if (months === 0) return 'Paid off';
+        if (!isFinite(months)) return 'Never (payment too low to cover interest)';
 
         const years = Math.floor(months / 12);
         const remainingMonths = months % 12;

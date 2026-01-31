@@ -4,13 +4,12 @@
 .bill-list-header {
     display: grid !important;
     /* Note | Day | Name | Amount | Balance | Paid */
-    /* Tuned widths: Note(50) Day(80) Name(1fr) Amount(140) Balance(160) Paid(70) */
-    grid-template-columns: 50px 80px 1fr 140px 160px 70px !important;
+    grid-template-columns: 44px 90px 1fr 120px 130px 80px !important;
     gap: 1rem;
-    padding: 0 1rem;
+    padding: 0 calc(1.25rem + 1px);
     margin-bottom: 0.75rem;
     color: rgba(255, 255, 255, 0.5);
-    font-size: 0.75rem;
+    font-size: 0.9rem;
     text-transform: uppercase;
     font-weight: 700;
     letter-spacing: 0.05em;
@@ -19,47 +18,41 @@
     padding-bottom: 12px;
 }
 
-/* Individual header cells */
+/* Individual header cells — no explicit width, grid controls sizing */
 .header-note {
-    width: 50px;
     text-align: center;
 }
 
 .header-date {
-    width: 80px;
     text-align: left;
     padding-left: 0.5rem;
 }
 
 .header-name {
-    flex: 1;
     text-align: left;
     padding-left: 0.5rem;
 }
 
 .header-amount {
-    width: 140px;
     text-align: right;
 }
 
 .header-balance {
-    width: 160px;
     text-align: right;
     color: rgba(255, 255, 255, 0.35);
 }
 
 .header-paid {
-    width: 70px;
     text-align: center;
 }
 
 /* Premium BILL ITEM GRID - Luxe micro-interactions */
 .bill-item {
     display: grid !important;
-    grid-template-columns: 50px 80px 1fr 140px 160px 70px !important;
-    gap: 0.75rem;
-    padding: 0.625rem 1rem;
-    margin-bottom: 0.375rem;
+    grid-template-columns: 44px 90px 1fr 120px 130px 80px !important;
+    gap: 1rem;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 0.5rem;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
     border-radius: 10px;
     align-items: center;
@@ -96,26 +89,29 @@
 
 /* Column 1: Note button */
 .bill-note-col {
-    width: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .add-note-btn {
-    width: 32px;
-    height: 32px;
+    width: auto;
+    min-width: 44px;
     min-width: unset;
     min-height: unset;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: rgba(255, 255, 255, 0.6);
+    padding: 0.3rem 0;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.55);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
     transition: all 0.2s ease;
 }
 
@@ -127,31 +123,29 @@
 
 /* Column 2: Date */
 .bill-date {
-    width: 80px;
     background: transparent !important;
     color: rgba(255, 255, 255, 0.7) !important;
     font-weight: 500;
     text-align: left;
     padding-left: 0.5rem !important;
-    font-size: 0.95rem;
+    font-size: 1rem;
     font-family: 'Geist Mono', 'Roboto Mono', monospace;
     /* If available, or standard mono */
     opacity: 0.9;
 }
 
-/* Column 3: Bill name */
+/* Column 3: Bill name — uses inner grid so stamp aligns across rows */
 .bill-name {
-    flex: 1;
-    display: flex;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 180px 1fr;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
     color: white;
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     font-weight: 500;
     overflow: hidden;
-    text-overflow: ellipsis;
     padding-left: 0.5rem;
-    white-space: nowrap;
 }
 
 .inline-note-input {
@@ -192,17 +186,15 @@
 
 /* Column 4: Amount */
 .bill-amount {
-    width: 140px;
     text-align: right;
     color: #FFD700;
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 1.15rem;
     letter-spacing: 0.02em;
 }
 
-/* Column 5: Balance (NEW) */
+/* Column 5: Balance */
 .bill-balance-col {
-    width: 160px;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -210,14 +202,14 @@
 }
 
 .balance-amount {
-    font-size: 0.9rem;
+    font-size: 1.05rem;
     color: rgba(255, 255, 255, 0.5);
     /* text-decoration: line-through; (Removed as requested) */
 }
 
 .payoff-info-btn {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     min-width: unset;
     min-height: unset;
     border-radius: 50%;
@@ -225,7 +217,7 @@
     border: none;
     color: #2196F3;
     cursor: pointer;
-    font-size: 11px;
+    font-size: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -240,39 +232,33 @@
 
 /* Column 6: Paid */
 .bill-actions {
-    width: 70px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .mark-paid-btn {
-    width: 36px;
-    height: 36px;
+    padding: 0.45rem 0.9rem;
     min-width: unset;
     min-height: unset;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    color: transparent;
+    border-radius: 6px;
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    color: #4ade80;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 1rem;
+    font-weight: 600;
     transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .mark-paid-btn:hover {
-    background: rgba(76, 175, 80, 0.2);
+    background: rgba(76, 175, 80, 0.25);
     border-color: #4CAF50;
     transform: scale(1.05);
-}
-
-.mark-paid-btn:not(:empty) {
-    color: #4CAF50;
-    background: rgba(76, 175, 80, 0.2);
-    border-color: #4CAF50;
 }
 
 /* Bills Pane - Main container for bills section */
@@ -290,6 +276,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 0.5rem;
+    scrollbar-gutter: stable;
     /* Space for scrollbar */
 }
 
@@ -330,7 +317,7 @@
     flex: 1;
     display: grid;
     /* 2 Columns: Main Bills Area (Rest of space) | Right Panel (Fixed width 300px as requested) */
-    grid-template-columns: 1fr 300px;
+    grid-template-columns: 1fr 520px;
     gap: 1.5rem;
     padding: 1.5rem 2rem;
     /* Added slightly more side padding for breathability */
@@ -366,7 +353,7 @@
 }
 
 .pane-header {
-    font-size: 0.9rem;
+    font-size: 1.05rem;
     font-weight: 600;
     margin-bottom: 1rem;
     color: rgba(255, 255, 255, 0.9);
@@ -441,23 +428,12 @@
     /* Prevent column itself from scrolling */
 }
 
-.paid-pane {
+.credit-accounts-pane {
     flex: 3;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     min-height: 0;
-    /* CRITICAL: Allows flex item to shrink below content size */
-}
-
-.paid-list {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 0.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
 }
 
 .stats-pane {
@@ -467,67 +443,170 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    gap: 0.5rem;
-    padding: 1rem 1.25rem;
+    gap: 0.15rem;
+    padding: 0.5rem 1rem;
     border-radius: 0.75rem;
     overflow: hidden;
 }
 
 .mini-stat {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .stat-label {
     font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.45);
     text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
 }
 
 .stat-value {
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.stat-value-gold {
     color: #d4af37;
 }
 
-/* Paid Item */
-.paid-item-clean {
-    min-height: 48px;
-    padding: 0.5rem;
+.stat-value-orange {
+    color: #f59e0b;
+}
+
+.stat-value-green {
+    color: #4ade80;
+}
+
+/* Paid Bill Row (inline in main list) */
+.bill-item.is-paid {
+    opacity: 0.6;
+    border-left: 3px solid rgba(34, 197, 94, 0.5);
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+
+.bill-item.is-paid:hover {
+    opacity: 0.8;
+}
+
+.bill-name-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.paid-stamp-area {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 0.75rem;
+    white-space: nowrap;
+    justify-content: flex-start;
 }
 
-.paid-main-text {
+/* Note editing spans full width */
+.bill-name > .inline-note-input {
+    grid-column: 1 / -1;
+}
+
+/* Note inline text in second column */
+.bill-note-inline {
+    opacity: 0.7;
+    font-style: italic;
+    font-size: 1em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.paid-rubber-stamp {
+    display: inline-block;
+    border: 2px solid #ff1744;
+    color: #ff1744;
+    font-size: 0.95rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    padding: 0.25rem 1.1rem;
+    border-radius: 3px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: rgba(255, 23, 68, 0.08);
+    box-shadow: 0 0 12px rgba(255, 23, 68, 0.3), 0 0 4px rgba(255, 23, 68, 0.2);
+    text-shadow: 0 0 6px rgba(255, 23, 68, 0.5);
+    position: relative;
+}
+
+.paid-method-text {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.45);
+    font-style: italic;
+    white-space: nowrap;
+}
+
+
+
+.paid-amount-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.partial-badge {
+    color: #f59e0b;
     font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.paid-amt-highlight {
-    color: #22c55e;
     font-weight: 600;
 }
 
-.paid-sub-text {
-    font-size: 0.75rem;
+.paid-method-label {
+    font-size: 0.8rem;
     color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.unpay-btn {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.undo-paid-btn {
+    padding: 0.35rem 0.7rem;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.9rem;
     cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.undo-paid-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.8);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.history-btn {
+    width: 100%;
+    padding: 0.85rem;
+    margin-top: 0.5rem;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 0.5rem;
+    color: #d4af37;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.history-btn:hover {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: rgba(212, 175, 55, 0.4);
 }
 
 /* Modals */
@@ -726,9 +805,9 @@
     background: rgba(255, 255, 255, 0.1);
     color: rgba(255, 255, 255, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 0.5rem 1rem;
+    padding: 0.55rem 1.1rem;
     border-radius: 6px;
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     cursor: pointer;
     transition: all 0.2s;
 }
@@ -753,10 +832,9 @@
     background: transparent;
     border: 1px solid #d4af37;
     color: #d4af37;
-    padding: 0.35rem 1rem;
+    padding: 0.45rem 1.2rem;
     border-radius: 6px;
-    /* Pill shape or rounded rect based on pref */
-    font-size: 0.8rem;
+    font-size: 0.95rem;
     cursor: pointer;
     transition: all 0.2s;
     text-transform: uppercase;
@@ -773,9 +851,9 @@
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: rgba(255, 255, 255, 0.7);
-    padding: 0.35rem 0.85rem;
+    padding: 0.45rem 1rem;
     border-radius: 6px;
-    font-size: 0.8rem;
+    font-size: 0.95rem;
     cursor: pointer;
     transition: all 0.2s;
     text-transform: uppercase;
@@ -1317,29 +1395,7 @@
     background: #444;
 }
 
-/* Stats Label Improvement for Longer Text */
-.mini-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    margin-bottom: 0;
-}
-
-.stat-label {
-    font-size: 0.65rem;
-    color: rgba(255, 255, 255, 0.6);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    white-space: normal;
-    /* Allow wrapping */
-    line-height: 1.2;
-}
-
-.stat-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #fff;
-}
+/* Stats Label Improvement — merged into main .mini-stat / .stat-label / .stat-value above */
 
 .strategy-narrative {
     margin-top: 1rem;
@@ -1486,13 +1542,79 @@
 }
 
 /* ============================================================================
+   DEVELOPMENT MODE BANNER
+   ============================================================================ */
+
+.dev-mode-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    padding: 0.6rem 1.5rem;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(20, 20, 20, 0.95) 100%);
+    border-top: 1px solid rgba(212, 175, 55, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 2000;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #d4af37;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.dev-banner-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.dev-banner-btn {
+    padding: 0.35rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid;
+}
+
+.dev-banner-remove {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.dev-banner-remove:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.dev-banner-reset {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+}
+
+.dev-banner-reset:hover {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: #ef4444;
+}
+
+/* ============================================================================
    RESPONSIVE DESIGN - CRITICAL FOR CROSS-DEVICE COMPATIBILITY
    ============================================================================ */
 
 /* Tablets and smaller laptops (1024px and below) */
 @media (max-width: 1024px) {
     .dashboard-content {
-        grid-template-columns: 1fr 250px;
+        grid-template-columns: 1fr 440px;
         gap: 1rem;
         padding: 1rem;
     }
@@ -1661,7 +1783,7 @@
     }
 
     .add-note-btn {
-        width: 44px; /* WCAG touch target on mobile */
+        width: min(100%, 44px); /* WCAG touch target on mobile, capped to grid column */
         height: 44px; /* WCAG touch target on mobile */
         font-size: 14px;
     }
@@ -1771,4 +1893,160 @@
     max-height: 90vh !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
+}
+
+/* ========== CREDIT ACCOUNTS PANE (Right Column) ========== */
+.credit-accounts-pane {
+    overflow-y: auto;
+    flex: 3;
+    min-height: 0;
+}
+
+.credit-accounts-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem 0.5rem;
+}
+
+.credit-accounts-header h3 {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.credit-accounts-table {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.credit-accounts-row {
+    display: grid;
+    grid-template-columns: 1fr 100px 120px;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    align-items: center;
+    font-size: 1.05rem;
+}
+
+.debt-section-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #d4af37;
+    padding: 0.5rem 0.75rem 0.2rem;
+}
+
+.debt-section-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 0.4rem 0.75rem;
+}
+
+.credit-accounts-row-header {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 700;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ca-item-block {
+    border-radius: 6px;
+    margin-bottom: 2px;
+}
+
+.ca-item-block.active {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.ca-item-block.paid-off {
+    background: rgba(255, 255, 255, 0.015);
+    opacity: 0.7;
+}
+
+.credit-accounts-row.active {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+}
+
+.credit-accounts-row.paid-off {
+    background: rgba(255, 255, 255, 0.015);
+    border-radius: 6px;
+    opacity: 0.7;
+}
+
+.ca-payoff-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.2rem 0.75rem 0.4rem;
+    gap: 0.5rem;
+}
+
+.ca-payoff-text {
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+}
+
+.ca-payoff-warning {
+    color: #f59e0b;
+}
+
+.ca-options-btn {
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    color: #d4af37;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.25rem 0.65rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.ca-options-btn:hover {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: #d4af37;
+}
+
+.ca-col-name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ca-col-balance,
+.ca-col-payment {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.ca-paid-off-text {
+    color: #4ade80;
+    font-weight: 600;
+    font-style: normal;
+}
+
+.status-active {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+}
+
+.status-paid-off {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
 }

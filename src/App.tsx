@@ -5,46 +5,10 @@ import { WelcomeWizard } from './components/WelcomeWizard';
 import { Dashboard } from './components/Dashboard';
 import { UpdateNotification } from './components/UpdateNotification';
 import { DateUtils } from './core/DateUtils';
+import { Bill, PayInfo, BudgetData, HistoryItem } from './types';
 import './styles/design-system.css';
 
 const STORAGE_KEY = 'honeycutt_budget_data';
-
-// ============================================================================
-// TYPE DEFINITIONS
-// ============================================================================
-
-interface Bill {
-    id: string;
-    name: string;
-    amount: number;
-    dueDate: string;
-    isPaid: boolean;
-    hasBalance: boolean;
-    balance?: number;
-    monthlyPayment?: number;
-    interestRate?: number;
-    note?: string;
-    isRecurring: boolean;
-    paidAmount?: number;
-    paidMethod?: string;
-}
-
-interface PayInfo {
-    id: string;
-    name: string;          // e.g., "Main Job", "Side Gig"
-    lastPayDate: string;   // ISO date string (user picks month/day/year)
-    frequency: 'weekly' | 'biweekly' | 'semimonthly' | 'monthly';
-}
-
-interface BudgetData {
-    bills: Bill[];
-    paidHistory: any[];
-    lastReset: string;
-    isFirstTime: boolean;
-    theme: 'dark' | 'light';
-    payInfos?: PayInfo[];
-    activeMonth?: string;
-}
 
 
 function App() {
@@ -76,6 +40,20 @@ function App() {
             const savedData = localStorage.getItem(STORAGE_KEY);
             if (savedData) {
                 const parsed = JSON.parse(savedData);
+                // Migrate old data formats
+                if (!parsed.version) {
+                    parsed.version = 1;
+                    // Ensure all bills have required fields
+                    if (parsed.bills) {
+                        parsed.bills = parsed.bills.map((b: any) => ({
+                            ...b,
+                            isRecurring: b.isRecurring ?? (b.frequency !== 'one-time'),
+                            frequency: b.frequency ?? 'monthly',
+                            isPaid: b.isPaid ?? false,
+                            hasBalance: b.hasBalance ?? false,
+                        }));
+                    }
+                }
                 console.info('Loaded budget data from storage');
                 setBudgetData(parsed);
             } else {
@@ -84,6 +62,7 @@ function App() {
             }
         } catch (error) {
             console.error('Failed to load budget data:', error);
+            alert('Warning: Your saved data could not be loaded and may have been corrupted. Starting fresh. If you had important data, check your browser developer tools console for details.');
             setBudgetData(DEFAULT_BUDGET_DATA);
         } finally {
             setLoading(false);
@@ -92,14 +71,35 @@ function App() {
 
     const saveBudgetData = useCallback((data: BudgetData) => {
         try {
+            // Create backup of current data before overwriting
+            const current = localStorage.getItem(STORAGE_KEY);
+            if (current) {
+                localStorage.setItem(STORAGE_KEY + '_backup', current);
+            }
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             setBudgetData(data);
         } catch (error) {
             console.error('Failed to save budget data:', error);
-            // Still update state
-            setBudgetData(data);
+            alert('Warning: Failed to save data to storage. Your changes may be lost if you close the app. Try freeing up disk space or clearing browser data.');
         }
     }, []);
+
+    const handleLoadBackup = useCallback((slot: number) => {
+        const key = `honeycutt_backup_slot_${slot}`;
+        const raw = localStorage.getItem(key);
+        if (!raw) return;
+        try {
+            const backup = JSON.parse(raw);
+            // Save current state to pre-restore slot before loading backup
+            const current = localStorage.getItem(STORAGE_KEY);
+            if (current) {
+                localStorage.setItem('honeycutt_backup_pre_restore', current);
+            }
+            saveBudgetData(backup.data);
+        } catch (e) {
+            console.error('Failed to load backup:', e);
+        }
+    }, [saveBudgetData]);
 
     const handleResetApp = useCallback(() => {
         // Clear all local storage
@@ -124,7 +124,7 @@ function App() {
             return;
         }
 
-        window.electronAPI.onUpdateAvailable((info: any) => {
+        window.electronAPI.onUpdateAvailable((info: { version: string }) => {
             console.log('Update available:', info);
             setUpdateInfo({
                 available: true,
@@ -140,7 +140,7 @@ function App() {
             } : null);
         });
 
-        window.electronAPI.onUpdateDownloaded((info: any) => {
+        window.electronAPI.onUpdateDownloaded((info: { version: string }) => {
             console.log('Update downloaded:', info);
             setUpdateInfo({
                 available: true,
@@ -167,12 +167,14 @@ function App() {
             lastReset: new Date().toISOString(),
             isFirstTime: false,
             theme: 'dark',
+            payInfos: [],
+            activeMonth: undefined,
         };
 
         saveBudgetData(newData);
     }, [saveBudgetData]);
 
-    const handleBillsChange = useCallback((bills: Bill[], history?: any[]) => {
+    const handleBillsChange = useCallback((bills: Bill[], history?: HistoryItem[]) => {
         if (budgetData) {
             saveBudgetData({
                 ...budgetData,
@@ -247,6 +249,7 @@ function App() {
                 onPayInfosChange={handlePayInfosChange}
                 onActiveMonthChange={handleActiveMonthChange}
                 onReset={handleResetApp}
+                onLoadBackup={handleLoadBackup}
             />
 
             {/* Update Notification */}
@@ -279,6 +282,12 @@ declare global {
                 load: () => Promise<BudgetData>;
                 save: (data: BudgetData) => Promise<void>;
             };
+            downloadUpdate: () => void;
+            installUpdate: () => void;
+            onUpdateAvailable: (callback: (info: { version: string }) => void) => void;
+            onUpdateProgress: (callback: (percent: number) => void) => void;
+            onUpdateDownloaded: (callback: (info: { version: string }) => void) => void;
+            onUpdateError: (callback: (message: string) => void) => void;
         };
     }
 }

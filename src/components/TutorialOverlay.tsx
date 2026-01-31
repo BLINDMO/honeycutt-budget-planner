@@ -69,10 +69,9 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete }) 
     const [coords, setCoords] = useState<DOMRect | null>(null);
     const step = tutorialSteps[currentStep];
 
-    if (!step) return null;
-
     useEffect(() => {
         const updatePosition = () => {
+            if (!step) return;
             const el = document.querySelector(step.target);
             if (el) {
                 // Smooth scroll to element so it's in view
@@ -96,7 +95,9 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete }) 
             window.removeEventListener('scroll', updatePosition);
             clearTimeout(timer);
         };
-    }, [currentStep, step.target]);
+    }, [currentStep, step?.target]);
+
+    if (!step) return null;
 
     const handleNext = () => {
         if (currentStep < tutorialSteps.length - 1) {

@@ -11,7 +11,9 @@ export interface Bill {
     hasBalance: boolean;
     balance?: number;
     monthlyPayment?: number;
-    interestRate?: number; // Stored as decimal (e.g., 0.18 for 18%)
+    interestRate?: number; // Stored as whole number (e.g., 18 for 18%)
+    originalDueDay?: number; // Original day-of-month to prevent date drift (e.g., 31)
+    isCreditAccount?: boolean; // Persistent credit card — stays visible even at $0 balance
     note?: string;
     isRecurring: boolean;
     frequency?: 'one-time' | 'monthly'; // Bill frequency
@@ -43,10 +45,12 @@ export interface PayInfo {
 }
 
 export interface BudgetData {
+    version?: number;
     bills: Bill[];
     paidHistory: HistoryItem[];
     lastReset: string; // ISO string
     isFirstTime: boolean;
     theme: 'dark' | 'light';
     payInfos?: PayInfo[];
+    activeMonth?: string;
 }

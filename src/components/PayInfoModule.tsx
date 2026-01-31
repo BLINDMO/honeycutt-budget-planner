@@ -242,9 +242,9 @@ const PayInfoFormModal: React.FC<PayInfoFormModalProps> = ({ payInfo, onSave, on
         if (!name.trim() || !lastPayDate) return;
 
         onSave({
-            id: payInfo?.id || `pay-${Date.now()}`,
+            id: payInfo?.id || crypto.randomUUID(),
             name: name.trim(),
-            lastPayDate: (() => { const [y,m,d] = lastPayDate.split('-').map(Number); return new Date(y, m-1, d, 12).toISOString(); })(),
+            lastPayDate: (() => { const p = lastPayDate.split('-').map(Number); const y = p[0] ?? 0, m = p[1] ?? 1, d = p[2] ?? 1; return new Date(y, m-1, d, 12).toISOString(); })(),
             frequency
         });
     };

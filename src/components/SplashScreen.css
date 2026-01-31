@@ -1,10 +1,14 @@
+/* ============================================================================
+   SPLASH SCREEN — PREMIUM DARK + GOLD
+   ============================================================================ */
+
 .splash-screen {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: #000000;
+    background: #050505;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -12,17 +16,50 @@
     overflow: hidden;
 }
 
+/* Deep vignette for cinematic depth */
 .splash-vignette {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(ellipse 70% 50% at 50% 50%,
-            rgba(10, 10, 10, 1) 0%,
-            rgba(0, 0, 0, 1) 100%);
+    background: radial-gradient(
+        ellipse 60% 55% at 50% 50%,
+        rgba(8, 8, 8, 0) 0%,
+        rgba(0, 0, 0, 0.7) 60%,
+        rgba(0, 0, 0, 0.95) 100%
+    );
     pointer-events: none;
+    z-index: 1;
 }
+
+/* Subtle gold radial ambient behind logo */
+.splash-radial-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 500px;
+    height: 500px;
+    transform: translate(-50%, -55%);
+    background: radial-gradient(
+        circle,
+        rgba(212, 175, 55, 0.06) 0%,
+        rgba(212, 175, 55, 0.02) 35%,
+        transparent 70%
+    );
+    pointer-events: none;
+    z-index: 2;
+    animation: pulse-glow 4s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% { opacity: 0.6; transform: translate(-50%, -55%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -55%) scale(1.08); }
+}
+
+/* ============================================================================
+   CONTENT
+   ============================================================================ */
 
 .splash-content {
     display: flex;
@@ -30,43 +67,117 @@
     align-items: center;
     position: relative;
     z-index: 10;
+    gap: 0;
 }
 
-/* Main Title */
+/* Logo container */
+.splash-logo-container {
+    margin-bottom: 1.5rem;
+}
+
+.splash-logo-svg {
+    display: block;
+    filter: drop-shadow(0 0 40px rgba(212, 175, 55, 0.15));
+}
+
+/* Title */
 .splash-title {
     font-family: 'Outfit', sans-serif;
-    font-size: clamp(2rem, 6vw, 4.5rem);
-    font-weight: 300;
+    font-size: clamp(2rem, 5.5vw, 4rem);
+    font-weight: 200;
     text-transform: uppercase;
     color: #ffffff;
     margin: 0;
-    text-shadow: 0 0 80px rgba(212, 175, 55, 0.25);
+    text-shadow:
+        0 0 60px rgba(212, 175, 55, 0.2),
+        0 0 120px rgba(212, 175, 55, 0.08);
 }
 
-/* Animated Divider */
+/* Divider */
 .title-divider {
-    width: 100px;
+    width: 140px;
     height: 1px;
-    background: linear-gradient(90deg,
-            transparent 0%,
-            rgba(212, 175, 55, 0.9) 50%,
-            transparent 100%);
-    margin: 1.5rem 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(212, 175, 55, 0.3) 20%,
+        rgba(212, 175, 55, 0.9) 50%,
+        rgba(212, 175, 55, 0.3) 80%,
+        transparent 100%
+    );
+    margin: 1.25rem 0;
     transform-origin: center;
 }
 
 /* Subtitle */
 .splash-subtitle {
     font-family: 'Inter', sans-serif;
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     font-weight: 400;
     letter-spacing: 0.35em;
     text-transform: uppercase;
     color: #d4af37;
     margin: 0;
+    text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
 }
 
-/* Particles */
+/* ============================================================================
+   PROGRESS BAR
+   ============================================================================ */
+
+.splash-progress-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 2.5rem;
+    width: 200px;
+}
+
+.splash-progress-track {
+    width: 100%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 1px;
+    position: relative;
+    overflow: visible;
+}
+
+.splash-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, rgba(212, 175, 55, 0.4), #d4af37);
+    border-radius: 1px;
+    transition: width 0.05s linear;
+    position: relative;
+}
+
+.splash-progress-glow {
+    position: absolute;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    background: #d4af37;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow:
+        0 0 8px rgba(212, 175, 55, 0.8),
+        0 0 20px rgba(212, 175, 55, 0.4);
+    transition: left 0.05s linear;
+}
+
+.splash-loading-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 400;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* ============================================================================
+   PARTICLES
+   ============================================================================ */
+
 .splash-particles {
     position: absolute;
     top: 0;
@@ -75,13 +186,38 @@
     height: 100%;
     pointer-events: none;
     overflow: hidden;
+    z-index: 3;
 }
 
 .particle {
     position: absolute;
-    width: 2px;
-    height: 2px;
     background: rgba(212, 175, 55, 0.5);
     border-radius: 50%;
-    box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
+}
+
+/* ============================================================================
+   CORNER ACCENTS
+   ============================================================================ */
+
+.splash-corner {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.splash-corner-tl {
+    top: 30px;
+    left: 30px;
+    border-top: 1px solid rgba(212, 175, 55, 0.15);
+    border-left: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.splash-corner-br {
+    bottom: 30px;
+    right: 30px;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+    border-right: 1px solid rgba(212, 175, 55, 0.15);
 }

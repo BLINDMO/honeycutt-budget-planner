@@ -95,7 +95,7 @@ export const NewMonthModal: React.FC<NewMonthModalProps> = ({
                                             checked={(decisions[bill.id] || 'skip') === 'skip'}
                                             onChange={() => handleDecisionChange(bill.id, 'skip')}
                                         />
-                                        <span>Skip (keep unpaid)</span>
+                                        <span>Carry Over (keep for next month)</span>
                                     </label>
                                     <label className="action-radio">
                                         <input
@@ -105,7 +105,7 @@ export const NewMonthModal: React.FC<NewMonthModalProps> = ({
                                             checked={decisions[bill.id] === 'defer'}
                                             onChange={() => handleDecisionChange(bill.id, 'defer')}
                                         />
-                                        <span>Defer (remove from list)</span>
+                                        <span>Remove (delete from list)</span>
                                     </label>
                                 </div>
                             </div>

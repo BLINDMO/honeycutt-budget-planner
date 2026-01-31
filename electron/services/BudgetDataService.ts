@@ -1,26 +1,16 @@
 import { app, dialog } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-
-export interface Bill {
-    id: string;
-    name: string;
-    amount: number;
-    dueDate: string;
-    isPaid: boolean;
-    hasBalance: boolean;
-    balance?: number;
-    monthlyPayment?: number;
-    interestRate?: number;
-    note?: string;
-    isRecurring: boolean;
-}
-
-export interface BudgetData {
-    bills: Bill[];
+// BudgetData type inlined to avoid cross-rootDir import from src/
+interface BudgetData {
+    version?: number;
+    bills: Array<Record<string, unknown>>;
+    paidHistory: Array<Record<string, unknown>>;
     lastReset: string;
     isFirstTime: boolean;
     theme: 'dark' | 'light';
+    payInfos?: Array<Record<string, unknown>>;
+    activeMonth?: string;
 }
 
 export class BudgetDataService {
@@ -39,6 +29,7 @@ export class BudgetDataService {
             // Return default data if file doesn't exist
             return {
                 bills: [],
+                paidHistory: [],
                 lastReset: new Date().toISOString(),
                 isFirstTime: true,
                 theme: 'dark',

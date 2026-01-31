@@ -235,7 +235,7 @@ textarea::placeholder {
   box-shadow: var(--glass-shadow);
   transition: all var(--transition-base);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Subtle top highlight for premium depth */

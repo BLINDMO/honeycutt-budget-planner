@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ConfirmationModal } from './ConfirmationModal';
 import { PayInfo } from './PayInfoHeader';
+import { Bill } from '@/types';
 import { DateUtils } from '@/core/DateUtils';
 import './SettingsModal.css';
 
@@ -13,9 +14,13 @@ interface SettingsModalProps {
     payInfos: PayInfo[];
     onPayInfosChange: (payInfos: PayInfo[]) => void;
     onResetApp: () => void;
+    backups?: Array<{ slot: number; timestamp: string; month: string }>;
+    onLoadBackup?: (slot: number) => void;
+    onPopulateTestData?: (bills: Bill[], methods: string[]) => void;
+    onRemoveTestBills?: (billIds: string[]) => void;
 }
 
-type TabType = 'reset' | 'payment-methods' | 'pay-schedule';
+type TabType = 'reset' | 'payment-methods' | 'pay-schedule' | 'backups' | 'development';
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
     isOpen,
@@ -24,13 +29,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onPaymentMethodsChange,
     payInfos,
     onPayInfosChange,
-    onResetApp
+    onResetApp,
+    backups,
+    onLoadBackup,
+    onPopulateTestData,
+    onRemoveTestBills
 }) => {
-    const [activeTab, setActiveTab] = useState<TabType>('reset');
+    const [activeTab, setActiveTab] = useState<TabType>('payment-methods');
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [methodToDelete, setMethodToDelete] = useState<string | null>(null);
     const [payInfoToDelete, setPayInfoToDelete] = useState<string | null>(null);
     const [editingPayInfo, setEditingPayInfo] = useState<PayInfo | null>(null);
+
+    // Development tab state
+    const [devPasscode, setDevPasscode] = useState('');
+    const [devUnlocked, setDevUnlocked] = useState(false);
+    const [devPopulated, setDevPopulated] = useState(false);
+    const [testBillIds, setTestBillIds] = useState<string[]>([]);
+    const [showExitDevOptions, setShowExitDevOptions] = useState(false);
+    const [backupToLoad, setBackupToLoad] = useState<number | null>(null);
 
     if (!isOpen) return null;
 
@@ -80,6 +97,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             case 'biweekly': return 'Every 2 Weeks';
             case 'semimonthly': return '1st & 15th';
             case 'monthly': return 'Monthly';
+            default: return freq;
         }
     };
 
@@ -133,6 +151,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             onClick={() => setActiveTab('pay-schedule')}
                         >
                             Pay Schedule
+                        </button>
+                        <button
+                            className={`settings-tab ${activeTab === 'backups' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('backups')}
+                        >
+                            Backups
+                        </button>
+                        <button
+                            className={`settings-tab ${activeTab === 'development' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('development')}
+                        >
+                            Development
                         </button>
                     </div>
 
@@ -247,6 +277,181 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 )}
                             </div>
                         )}
+
+                        {activeTab === 'backups' && (
+                            <div className="settings-section">
+                                <h3>Automatic Backups</h3>
+                                <p className="settings-description">
+                                    Backups are created automatically when you transition to a new month. Up to 2 backups are kept.
+                                </p>
+                                {(!backups || backups.length === 0) ? (
+                                    <div className="empty-state">
+                                        <p>No backups available yet</p>
+                                        <small>Backups are created automatically when you start a new month</small>
+                                    </div>
+                                ) : (
+                                    <div className="backup-list">
+                                        {backups.map(b => {
+                                            const d = new Date(b.timestamp);
+                                            const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                            const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                                            const [year, mon] = b.month.split('-');
+                                            const monthLabel = new Date(Number(year), Number(mon) - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                                            return (
+                                                <div key={b.slot} className="backup-item">
+                                                    <div className="backup-info">
+                                                        <div className="backup-date">{dateStr} at {timeStr}</div>
+                                                        <div className="backup-month-label">{monthLabel}</div>
+                                                    </div>
+                                                    <button
+                                                        className="btn-secondary backup-load-btn"
+                                                        onClick={() => setBackupToLoad(b.slot)}
+                                                    >
+                                                        Load
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === 'development' && (
+                            <div className="settings-section">
+                                {!devUnlocked ? (
+                                    <div className="dev-passcode-section">
+                                        <h3>Developer Access</h3>
+                                        <p className="settings-description">Enter the developer passcode to continue</p>
+                                        <input
+                                            type="password"
+                                            className="dev-passcode-input"
+                                            value={devPasscode}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                setDevPasscode(val);
+                                                if (val === '3309') setDevUnlocked(true);
+                                            }}
+                                            placeholder="Passcode"
+                                            maxLength={4}
+                                            autoFocus
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="dev-unlocked-section">
+                                        <h3>Development Mode</h3>
+                                        {!devPopulated ? (
+                                            <>
+                                                <p className="settings-description">
+                                                    Generate random test bills and payment methods to preview how the app works with data.
+                                                </p>
+                                                <button
+                                                    className="btn-dev-populate"
+                                                    onClick={() => {
+                                                        // Realistic test bills with fixed, verifiable financial data
+                                                        const testBillDefs: Array<{
+                                                            name: string; day: number; amount: number;
+                                                            isCreditAccount?: boolean; hasBalance?: boolean;
+                                                            balance?: number; monthlyPayment?: number; interestRate?: number;
+                                                        }> = [
+                                                            { name: 'Electric', day: 5, amount: 145.00 },
+                                                            { name: 'Water', day: 10, amount: 65.00 },
+                                                            { name: 'Internet', day: 15, amount: 79.99 },
+                                                            { name: 'Phone', day: 18, amount: 95.00 },
+                                                            // Car Payment: $18,500 balance, $385/mo, 5.9% APR → ~55 months payoff
+                                                            { name: 'Car Payment', day: 1, amount: 385.00, hasBalance: true, balance: 18500, monthlyPayment: 385.00, interestRate: 5.9 },
+                                                            { name: 'Car Insurance', day: 3, amount: 142.00 },
+                                                            { name: 'Rent', day: 1, amount: 1200.00 },
+                                                            { name: 'Netflix', day: 22, amount: 15.49 },
+                                                            { name: 'Spotify', day: 22, amount: 11.99 },
+                                                            { name: 'Gym', day: 1, amount: 49.99 },
+                                                            // Student Loan: $24,000 balance, $280/mo, 4.5% APR → ~103 months payoff
+                                                            { name: 'Student Loan', day: 15, amount: 280.00, hasBalance: true, balance: 24000, monthlyPayment: 280.00, interestRate: 4.5 },
+                                                            // Credit Card Visa: $4,800 balance, $150/mo, 22.9% APR → ~47 months payoff
+                                                            { name: 'Credit Card Visa', day: 12, amount: 150.00, isCreditAccount: true, hasBalance: true, balance: 4800, monthlyPayment: 150.00, interestRate: 22.9 },
+                                                            // Credit Card Amex: $2,200 balance, $100/mo, 18.9% APR → ~27 months payoff
+                                                            { name: 'Credit Card Amex', day: 20, amount: 100.00, isCreditAccount: true, hasBalance: true, balance: 2200, monthlyPayment: 100.00, interestRate: 18.9 },
+                                                            { name: 'Medical Bill', day: 25, amount: 75.00 },
+                                                            { name: 'Groceries', day: 7, amount: 400.00 },
+                                                        ];
+                                                        const now = new Date();
+                                                        const y = now.getFullYear();
+                                                        const m = now.getMonth();
+                                                        const newBills: Bill[] = testBillDefs.map((def) => {
+                                                            const dd = `${y}-${String(m + 1).padStart(2, '0')}-${String(def.day).padStart(2, '0')}`;
+                                                            return {
+                                                                id: crypto.randomUUID(),
+                                                                name: def.name,
+                                                                amount: def.amount,
+                                                                dueDate: dd,
+                                                                isPaid: false,
+                                                                hasBalance: def.hasBalance || false,
+                                                                balance: def.balance,
+                                                                monthlyPayment: def.monthlyPayment,
+                                                                interestRate: def.interestRate,
+                                                                isCreditAccount: def.isCreditAccount || undefined,
+                                                                isRecurring: true,
+                                                                frequency: 'monthly' as const,
+                                                                originalDueDay: def.day,
+                                                            };
+                                                        });
+                                                        const methods = ['Visa ending 4242', 'Chase Checking', 'PayPal'];
+                                                        setTestBillIds(newBills.map(b => b.id));
+                                                        setDevPopulated(true);
+                                                        onPopulateTestData?.(newBills, methods);
+                                                    }}
+                                                >
+                                                    Populate and Test
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <p className="settings-description">
+                                                    {testBillIds.length} test bills and 3 payment methods have been added.
+                                                </p>
+                                                {!showExitDevOptions ? (
+                                                    <button
+                                                        className="btn-exit-dev"
+                                                        onClick={() => setShowExitDevOptions(true)}
+                                                    >
+                                                        Exit Development Mode
+                                                    </button>
+                                                ) : (
+                                                    <div className="dev-exit-options">
+                                                        <p className="settings-description">How would you like to exit?</p>
+                                                        <button
+                                                            className="btn-danger"
+                                                            onClick={() => {
+                                                                onResetApp();
+                                                                setDevPopulated(false);
+                                                                setDevUnlocked(false);
+                                                                setDevPasscode('');
+                                                                setShowExitDevOptions(false);
+                                                                setTestBillIds([]);
+                                                                onClose();
+                                                            }}
+                                                        >
+                                                            Full Reset
+                                                        </button>
+                                                        <button
+                                                            className="btn-secondary"
+                                                            onClick={() => {
+                                                                onRemoveTestBills?.(testBillIds);
+                                                                setDevPopulated(false);
+                                                                setShowExitDevOptions(false);
+                                                                setTestBillIds([]);
+                                                            }}
+                                                        >
+                                                            Remove Test Data Only
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </motion.div>
             </motion.div>
@@ -314,6 +519,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* Load Backup Confirmation */}
+            <AnimatePresence>
+                {backupToLoad !== null && (
+                    <div className="settings-sub-modal">
+                        <ConfirmationModal
+                            isOpen={true}
+                            title="Load Backup"
+                            message="Are you sure you want to load this backup? Your current data will be saved before loading."
+                            confirmLabel="Yes, Load Backup"
+                            isDestructive={false}
+                            onConfirm={() => {
+                                onLoadBackup?.(backupToLoad);
+                                setBackupToLoad(null);
+                            }}
+                            onCancel={() => setBackupToLoad(null)}
+                        />
+                    </div>
+                )}
+            </AnimatePresence>
         </>
     );
 };
@@ -336,7 +561,7 @@ const PayInfoFormModal: React.FC<PayInfoFormModalProps> = ({ payInfo, onSave, on
         onSave({
             id: payInfo.id,
             name: name.trim(),
-            lastPayDate: (() => { const [y,m,d] = lastPayDate.split('-').map(Number); return new Date(y, m-1, d, 12).toISOString(); })(),
+            lastPayDate: (() => { const p = lastPayDate.split('-').map(Number); const y = p[0] ?? 0, m = p[1] ?? 1, d = p[2] ?? 1; return new Date(y, m-1, d, 12).toISOString(); })(),
             frequency
         });
     };

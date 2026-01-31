@@ -11,10 +11,11 @@ export class DateUtils {
 
         // Handle ISO string format (has 'T' separator)
         if (dateString.includes('T')) {
-            dateString = dateString.split('T')[0];
+            dateString = dateString.split('T')[0] ?? dateString;
         }
 
-        const [year, month, day] = dateString.split('-').map(Number);
+        const parts = dateString.split('-').map(Number);
+        const year = parts[0], month = parts[1], day = parts[2];
         if (!year || !month || !day) return new Date();
 
         return new Date(year, month - 1, day);
@@ -138,14 +139,15 @@ export class DateUtils {
     /** Extract "YYYY-MM" from a date string (YYYY-MM-DD or ISO) */
     static getMonthFromDate(dateStr: string): string {
         if (!dateStr) return this.getCurrentMonth();
-        if (dateStr.includes('T')) dateStr = dateStr.split('T')[0];
+        if (dateStr.includes('T')) dateStr = dateStr.split('T')[0] ?? dateStr;
         const parts = dateStr.split('-');
-        return `${parts[0]}-${parts[1]}`;
+        return `${parts[0] ?? ''}-${parts[1] ?? ''}`;
     }
 
     /** Add months to a "YYYY-MM" string, returns "YYYY-MM" */
     static addMonthsToMonth(monthStr: string, count: number): string {
-        const [year, month] = monthStr.split('-').map(Number);
+        const parts = monthStr.split('-').map(Number);
+        const year = parts[0] ?? 0, month = parts[1] ?? 1;
         const d = new Date(year, month - 1 + count, 1);
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     }
@@ -159,7 +161,8 @@ export class DateUtils {
 
     /** "YYYY-MM" → "January 2025" */
     static getMonthDisplay(monthStr: string): string {
-        const [year, month] = monthStr.split('-').map(Number);
+        const parts = monthStr.split('-').map(Number);
+        const year = parts[0] ?? 0, month = parts[1] ?? 1;
         const d = new Date(year, month - 1, 1);
         return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     }

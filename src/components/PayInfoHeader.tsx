@@ -187,7 +187,7 @@ export const PayInfoHeader: React.FC<PayInfoHeaderProps> = ({ payInfos, onPayInf
                                     {index === 0 && <span className="pay-info-prefix">Next:</span>}
                                     {index > 0 && <span className="pay-info-prefix">Then:</span>}
                                     <span className="pay-info-name">{pay.name}</span>
-                                    <span className="pay-info-days">in <strong>{pay.daysUntil}</strong> day{pay.daysUntil !== 1 ? 's' : ''}</span>
+                                    <span className="pay-info-days">{pay.daysUntil === 0 ? <strong>Today</strong> : pay.daysUntil < 0 ? <><strong>Overdue</strong></> : <>in <strong>{pay.daysUntil}</strong> day{pay.daysUntil !== 1 ? 's' : ''}</>}</span>
                                     <span className="pay-info-date">on {formatDate(pay.nextDate)}</span>
 
                                     {isEditMode && (
@@ -277,9 +277,9 @@ const PayInfoFormModal: React.FC<PayInfoFormModalProps> = ({ payInfo, onSave, on
         if (!name.trim() || !lastPayDate) return;
 
         onSave({
-            id: payInfo?.id || `pay-${Date.now()}`,
+            id: payInfo?.id || crypto.randomUUID(),
             name: name.trim(),
-            lastPayDate: (() => { const [y,m,d] = lastPayDate.split('-').map(Number); return new Date(y, m-1, d, 12).toISOString(); })(),
+            lastPayDate: (() => { const p = lastPayDate.split('-').map(Number); const y = p[0] ?? 0, m = p[1] ?? 1, d = p[2] ?? 1; return new Date(y, m-1, d, 12).toISOString(); })(),
             frequency
         });
     };

@@ -1,10 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { DateUtils } from '../core/DateUtils';
 import './WelcomeWizard.css';
-
-// ============================================================================
-// TYPE DEFINITIONS
-// ============================================================================
 
 interface Bill {
     id: string;
@@ -20,55 +17,17 @@ interface Bill {
     note?: string;
     paidAmount?: number;
     paidMethod?: string;
+    frequency?: 'one-time' | 'monthly';
+    isCreditAccount?: boolean;
+    originalDueDay?: number;
 }
 
 interface WelcomeWizardProps {
     onComplete: (bills: Bill[]) => void;
 }
 
-type WizardStep = 'welcome' | 'add-bills';
-
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-/**
- * Calculates the next occurrence of a given day of the month
- */
-const getNextOccurrenceOfDay = (day: number): Date => {
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-
-    // Start with current month
-    let date = new Date(currentYear, currentMonth, day);
-
-    // If the date has already passed this month, move to next month
-    if (date < today) {
-        date = new Date(currentYear, currentMonth + 1, day);
-    }
-
-    return date;
-};
-
-/**
- * Validates day of month input (1-31)
- */
-const isValidDay = (day: number): boolean => {
-    return Number.isInteger(day) && day >= 1 && day <= 31;
-};
-
-// ============================================================================
-// WELCOME WIZARD COMPONENT
-// ============================================================================
-
 export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
-    // ========================================================================
-    // STATE
-    // ========================================================================
-
-    const formIdPrefix = useMemo(() => `wizard-${Date.now()}-`, []);
-    const [step, setStep] = useState<WizardStep>('welcome');
+    const [step, setStep] = useState<'welcome' | 'add-bills'>('welcome');
     const [bills, setBills] = useState<Bill[]>([]);
 
     // Form state
@@ -81,10 +40,9 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
     const [balance, setBalance] = useState('');
     const [monthlyPayment, setMonthlyPayment] = useState('');
     const [interestRate, setInterestRate] = useState('');
+    const [isCreditAccount, setIsCreditAccount] = useState(false);
 
-    // ========================================================================
-    // COMPUTED VALUES
-    // ========================================================================
+    const isMonthly = frequency === 'monthly';
 
     const currentDate = useMemo(() => {
         return new Date().toLocaleDateString('en-US', {
@@ -96,26 +54,13 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
     }, []);
 
     const isFormValid = useMemo(() => {
-        // For one-time bills: need name, amount, and due date
         if (frequency === 'one-time') {
             return Boolean(billName.trim() && amount && dueDate);
         }
-        // For monthly bills: need name and due date
-        // Amount can be 0 if it varies each month
         return Boolean(billName.trim() && dueDate && (amountVaries || amount));
     }, [billName, amount, dueDate, frequency, amountVaries]);
 
-    const canFinish = useMemo(() => {
-        return bills.length > 0;
-    }, [bills.length]);
-
-    // ========================================================================
-    // EVENT HANDLERS
-    // ========================================================================
-
-    const handleNext = useCallback(() => {
-        setStep('add-bills');
-    }, []);
+    const canFinish = bills.length > 0;
 
     const resetForm = useCallback(() => {
         setBillName('');
@@ -124,6 +69,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
         setFrequency('one-time');
         setAmountVaries(false);
         setHasBalance(false);
+        setIsCreditAccount(false);
         setBalance('');
         setMonthlyPayment('');
         setInterestRate('');
@@ -132,10 +78,12 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
     const handleAddBill = useCallback(() => {
         if (!isFormValid) return;
 
+        const parsedAmount = amountVaries ? 0 : parseFloat(amount) || 0;
+
         const newBill: Bill = {
-            id: `bill-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            id: crypto.randomUUID(),
             name: billName.trim(),
-            amount: parseFloat(amount),
+            amount: parsedAmount,
             dueDate,
             frequency,
             hasBalance,
@@ -143,65 +91,30 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
             monthlyPayment: hasBalance && monthlyPayment
                 ? parseFloat(monthlyPayment)
                 : hasBalance
-                    ? parseFloat(amount)
+                    ? parsedAmount
                     : undefined,
             interestRate: hasBalance && interestRate ? parseFloat(interestRate) : undefined,
             isPaid: false,
             isRecurring: frequency === 'monthly',
+            isCreditAccount: hasBalance && isCreditAccount,
+            originalDueDay: dueDate ? DateUtils.parseLocalDate(dueDate).getDate() : undefined,
         };
 
         setBills(prev => [...prev, newBill]);
         resetForm();
-    }, [isFormValid, billName, amount, dueDate, hasBalance, balance, monthlyPayment, interestRate, resetForm]);
+    }, [isFormValid, billName, amount, dueDate, frequency, amountVaries, hasBalance, balance, monthlyPayment, interestRate, isCreditAccount, resetForm]);
 
     const handleRemoveBill = useCallback((id: string) => {
         setBills(prev => prev.filter(bill => bill.id !== id));
     }, []);
 
     const handleFinish = useCallback(() => {
-        if (canFinish) {
-            onComplete(bills);
-        }
+        if (canFinish) onComplete(bills);
     }, [canFinish, bills, onComplete]);
 
-    const handleDayChange = useCallback((value: string) => {
-        if (!value) {
-            setDueDate('');
-            return;
-        }
-
-        const day = parseInt(value, 10);
-
-        if (isValidDay(day)) {
-            const date = getNextOccurrenceOfDay(day);
-            setDueDate(date.toISOString());
-        }
-    }, []);
-
-    const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && !e.shiftKey && isFormValid) {
-            e.preventDefault();
-            handleAddBill();
-        }
-    }, [isFormValid, handleAddBill]);
-
-    // ========================================================================
-    // RENDER HELPERS
-    // ========================================================================
-
-    const getDayFromDate = (dateString: string): string => {
-        if (!dateString) return '';
-        const parts = dateString.split('-');
-        return parts.length === 3 ? String(Number(parts[2])) : '';
-    };
-
     const formatCurrency = (value: number): string => {
-        return value.toFixed(2);
+        return isNaN(value) ? '0.00' : value.toFixed(2);
     };
-
-    // ========================================================================
-    // RENDER
-    // ========================================================================
 
     return (
         <div className="welcome-wizard">
@@ -214,24 +127,16 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0.9, opacity: 0 }}
                         transition={{ duration: 0.5 }}
-                        role="region"
-                        aria-label="Welcome screen"
                     >
                         <h1>Welcome to Honeycutt Budget Planner</h1>
                         <p className="welcome-subtitle">
                             Proceed by verifying that this is the date, then click next.
                         </p>
-
                         <div className="date-confirmation">
                             <p className="date-label">Today's Date:</p>
                             <p className="date-value">{currentDate}</p>
                         </div>
-
-                        <button
-                            className="btn-primary"
-                            onClick={handleNext}
-                            aria-label="Proceed to add bills"
-                        >
+                        <button className="btn-primary" onClick={() => setStep('add-bills')}>
                             Next
                         </button>
                     </motion.div>
@@ -245,8 +150,6 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: -100, opacity: 0 }}
                         transition={{ duration: 0.4 }}
-                        role="region"
-                        aria-label="Add bills form"
                     >
                         <h2>Add Your Bills</h2>
                         <p className="step-subtitle">
@@ -257,28 +160,22 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
                             <div className="wizard-form-col">
                                 <form
                                     className="bill-form"
-                                    onSubmit={(e) => {
-                                        e.preventDefault();
-                                        handleAddBill();
-                                    }}
+                                    onSubmit={(e) => { e.preventDefault(); handleAddBill(); }}
                                 >
                                     {/* Bill Name */}
                                     <div className="form-group">
-                                        <label htmlFor="billName">Bill Name *</label>
+                                        <label>Bill Name *</label>
                                         <input
-                                            id={`${formIdPrefix}billName`}
                                             type="text"
                                             value={billName}
                                             onChange={(e) => setBillName(e.target.value)}
-                                            onKeyPress={handleKeyPress}
                                             placeholder="e.g., Electric Bill"
                                             required
-                                            aria-required="true"
                                             autoComplete="off"
                                         />
                                     </div>
 
-                                    {/* Frequency Radio Buttons */}
+                                    {/* Frequency */}
                                     <div className="form-group">
                                         <label>Frequency *</label>
                                         <div className="radio-group">
@@ -290,7 +187,7 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
                                                     checked={frequency === 'one-time'}
                                                     onChange={(e) => setFrequency(e.target.value as 'one-time' | 'monthly')}
                                                 />
-                                                <span>One Time Payment</span>
+                                                <span>One Time</span>
                                             </label>
                                             <label className="radio-option">
                                                 <input
@@ -305,35 +202,52 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
                                         </div>
                                     </div>
 
-                                    {/* Due Date - Always show */}
+                                    {/* Due Date */}
                                     <div className="form-group">
-                                        <label htmlFor="dueDate">
-                                            {frequency === 'monthly' ? 'Date Due Each Month *' : 'Due Date *'}
-                                        </label>
+                                        <label>{isMonthly ? 'Date Due Each Month *' : 'Due Date *'}</label>
                                         <input
-                                            id={`${formIdPrefix}dueDate`}
                                             type="date"
                                             value={dueDate}
                                             onChange={(e) => setDueDate(e.target.value)}
                                             onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
                                             className="date-input-full-click"
                                             required
-                                            aria-required="true"
-                                            aria-label="Bill due date"
                                         />
                                     </div>
 
-                                    {/* Monthly Bill Settings */}
+                                    {/* Amount — show unless monthly + varies */}
+                                    {(!isMonthly || !amountVaries) && (
+                                        <div className="form-group">
+                                            <label>Amount *</label>
+                                            <div className="input-with-icon">
+                                                <span className="input-icon">$</span>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    value={amount}
+                                                    onChange={(e) => setAmount(e.target.value)}
+                                                    placeholder="0.00"
+                                                    required={!amountVaries}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Monthly options */}
                                     <AnimatePresence>
-                                        {frequency === 'monthly' && (
+                                        {isMonthly && (
                                             <motion.div
-                                                initial={{ opacity: 0, scaleY: 0 }}
-                                                animate={{ opacity: 1, scaleY: 1 }}
-                                                exit={{ opacity: 0, scaleY: 0 }}
-                                                transition={{ duration: 0.25, ease: "easeInOut" }}
-                                                style={{ transformOrigin: 'top', overflow: 'hidden' }}
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                transition={{ duration: 0.25 }}
+                                                style={{ overflow: 'hidden' }}
                                             >
-                                                {/* Amount Variation */}
+                                                <div className="wizard-monthly-divider">
+                                                    <span>Monthly Options</span>
+                                                </div>
+
                                                 <div className="form-group checkbox-group">
                                                     <label>
                                                         <input
@@ -345,170 +259,109 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
                                                     </label>
                                                 </div>
 
-                                                {/* Amount field - only if not varying */}
-                                                {!amountVaries && (
-                                                    <div className="form-group">
-                                                        <label htmlFor="amount">Amount *</label>
-                                                        <div className="input-with-icon">
-                                                            <span className="input-icon" aria-hidden="true">$</span>
+                                                <div className="form-group checkbox-group">
+                                                    <label>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={hasBalance}
+                                                            onChange={(e) => {
+                                                                setHasBalance(e.target.checked);
+                                                                if (e.target.checked && !monthlyPayment && amount) {
+                                                                    setMonthlyPayment(amount);
+                                                                }
+                                                            }}
+                                                        />
+                                                        <span>Track balance & payoff</span>
+                                                    </label>
+                                                    <span className="wizard-hint">For payoff date calculations</span>
+                                                </div>
+
+                                                {hasBalance && (
+                                                    <div className="form-group checkbox-group">
+                                                        <label>
                                                             <input
-                                                                id={`${formIdPrefix}amount`}
-                                                                type="number"
-                                                                step="0.01"
-                                                                min="0"
-                                                                value={amount}
-                                                                onChange={(e) => setAmount(e.target.value)}
-                                                                onKeyPress={handleKeyPress}
-                                                                placeholder="0.00"
-                                                                required
-                                                                aria-required="true"
-                                                                aria-label="Bill amount in dollars"
+                                                                type="checkbox"
+                                                                checked={isCreditAccount}
+                                                                onChange={(e) => setIsCreditAccount(e.target.checked)}
                                                             />
-                                                        </div>
+                                                            <span>Credit Account</span>
+                                                        </label>
+                                                        <span className="wizard-hint">Keeps card visible when paid off</span>
                                                     </div>
                                                 )}
+
+                                                <AnimatePresence>
+                                                    {hasBalance && (
+                                                        <motion.div
+                                                            className="balance-fields"
+                                                            initial={{ opacity: 0, height: 0 }}
+                                                            animate={{ opacity: 1, height: 'auto' }}
+                                                            exit={{ opacity: 0, height: 0 }}
+                                                            transition={{ duration: 0.25 }}
+                                                            style={{ overflow: 'hidden' }}
+                                                        >
+                                                            <div className="form-group">
+                                                                <label>Current Balance</label>
+                                                                <div className="input-with-icon">
+                                                                    <span className="input-icon">$</span>
+                                                                    <input
+                                                                        type="number"
+                                                                        step="0.01"
+                                                                        min="0"
+                                                                        value={balance}
+                                                                        onChange={(e) => setBalance(e.target.value)}
+                                                                        placeholder="0.00"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                            <div className="form-group">
+                                                                <label>Monthly Payment</label>
+                                                                <div className="input-with-icon">
+                                                                    <span className="input-icon">$</span>
+                                                                    <input
+                                                                        type="number"
+                                                                        step="0.01"
+                                                                        min="0"
+                                                                        value={monthlyPayment}
+                                                                        onChange={(e) => setMonthlyPayment(e.target.value)}
+                                                                        placeholder="0.00"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                            <div className="form-group">
+                                                                <label>APR % (Optional)</label>
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    min="0"
+                                                                    max="100"
+                                                                    value={interestRate}
+                                                                    onChange={(e) => setInterestRate(e.target.value)}
+                                                                    placeholder="0.00"
+                                                                />
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
 
-                                    {/* Amount for One-Time Bills */}
-                                    {frequency === 'one-time' && (
-                                        <div className="form-group">
-                                            <label htmlFor="amount">Amount *</label>
-                                            <div className="input-with-icon">
-                                                <span className="input-icon" aria-hidden="true">$</span>
-                                                <input
-                                                    id={`${formIdPrefix}amount`}
-                                                    type="number"
-                                                    step="0.01"
-                                                    min="0"
-                                                    value={amount}
-                                                    onChange={(e) => setAmount(e.target.value)}
-                                                    onKeyPress={handleKeyPress}
-                                                    placeholder="0.00"
-                                                    required
-                                                    aria-required="true"
-                                                    aria-label="Bill amount in dollars"
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Balance Tracker Checkbox - Only for Monthly Bills */}
-                                    {frequency === 'monthly' && (
-                                        <div className="form-group checkbox-group">
-                                            <label>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={hasBalance}
-                                                    onChange={(e) => {
-                                                        const isChecked = e.target.checked;
-                                                        setHasBalance(isChecked);
-                                                        // Auto-prefill payment if checking the box and payment is empty
-                                                        if (isChecked && !monthlyPayment && amount) {
-                                                            setMonthlyPayment(amount);
-                                                        }
-                                                    }}
-                                                    aria-label="Include payment payoff dates and balance tracker"
-                                                />
-                                                <span>Include Payment Payoff Dates and Balance Tracker?</span>
-                                                <span style={{
-                                                    display: 'block',
-                                                    fontSize: '0.85em',
-                                                    opacity: 0.7,
-                                                    marginTop: '0.25rem',
-                                                    marginLeft: '1.5rem',
-                                                    fontStyle: 'italic'
-                                                }}>
-                                                    Used for balance payoff calculations
-                                                </span>
-                                            </label>
-                                        </div>
-                                    )}
-
-                                    {/* Balance Tracker Fields (conditional) */}
-                                    <AnimatePresence>
-                                        {hasBalance && frequency === 'monthly' && (
-                                            <motion.div
-                                                className="balance-fields"
-                                                initial={{ opacity: 0, scaleY: 0 }}
-                                                animate={{ opacity: 1, scaleY: 1 }}
-                                                exit={{ opacity: 0, scaleY: 0 }}
-                                                transition={{ duration: 0.25, ease: "easeInOut" }}
-                                                style={{ transformOrigin: 'top', overflow: 'hidden' }}
-                                            >
-                                                <div className="form-group">
-                                                    <label htmlFor="balance">Current Balance Until Payoff</label>
-                                                    <div className="input-with-icon">
-                                                        <span className="input-icon" aria-hidden="true">$</span>
-                                                        <input
-                                                            id="balance"
-                                                            type="number"
-                                                            step="0.01"
-                                                            min="0"
-                                                            value={balance}
-                                                            onChange={(e) => setBalance(e.target.value)}
-                                                            placeholder="0.00"
-                                                            aria-label="Current balance until payoff"
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div className="form-group">
-                                                    <label htmlFor="monthlyPayment">Monthly Payment Amount</label>
-                                                    <div className="input-with-icon">
-                                                        <span className="input-icon" aria-hidden="true">$</span>
-                                                        <input
-                                                            id="monthlyPayment"
-                                                            type="number"
-                                                            step="0.01"
-                                                            min="0"
-                                                            value={monthlyPayment}
-                                                            onChange={(e) => setMonthlyPayment(e.target.value)}
-                                                            placeholder="0.00"
-                                                            aria-label="Monthly payment amount in dollars"
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div className="form-group">
-                                                    <label htmlFor="interestRate">
-                                                        APR for Calculation (Optional)
-                                                    </label>
-                                                    <input
-                                                        id="interestRate"
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0"
-                                                        max="100"
-                                                        value={interestRate}
-                                                        onChange={(e) => setInterestRate(e.target.value)}
-                                                        placeholder="0.00"
-                                                        aria-label="Annual percentage rate for calculation"
-                                                    />
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-
-                                    {/* Form Actions */}
                                     <div className="form-actions">
                                         <button
                                             type="submit"
                                             className="btn-secondary"
                                             disabled={!isFormValid}
-                                            aria-label="Add bill to list"
                                             style={{ width: '100%' }}
                                         >
                                             Add Bill
                                         </button>
                                     </div>
                                 </form>
-
                             </div>
 
                             <div className="wizard-preview-col">
-                                {canFinish && (
+                                {canFinish ? (
                                     <motion.div
                                         className="bills-preview"
                                         initial={{ opacity: 0, y: 20 }}
@@ -529,7 +382,6 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
                                                         type="button"
                                                         className="btn-remove"
                                                         onClick={() => handleRemoveBill(bill.id)}
-                                                        aria-label={`Remove ${bill.name} from list`}
                                                         title="Remove bill"
                                                     >
                                                         ×
@@ -548,19 +400,8 @@ export const WelcomeWizard: React.FC<WelcomeWizardProps> = ({ onComplete }) => {
                                             </button>
                                         </div>
                                     </motion.div>
-                                )}
-                                {!canFinish && (
-                                    <div className="empty-preview-placeholder" style={{
-                                        height: '100%',
-                                        minHeight: '200px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        border: '1px dashed rgba(255,255,255,0.1)',
-                                        borderRadius: '0.75rem',
-                                        color: 'rgba(255,255,255,0.3)',
-                                        padding: '2rem'
-                                    }}>
+                                ) : (
+                                    <div className="empty-preview-placeholder">
                                         Bills you add will appear here
                                     </div>
                                 )}
